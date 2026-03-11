@@ -1,0 +1,609 @@
+syntax = "proto3";
+
+package gyt;
+
+option go_package = "github.com/Gyt-project/backend-api/pkg/grpc;grpc";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// GytService is the main backend API consumed by the API gateway.
+service GytService {
+  // ─── Auth ────────────────────────────────────────────────────────────────
+  rpc Register(RegisterRequest) returns (AuthResponse);
+  rpc Login(LoginRequest) returns (AuthResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse);
+
+  // ─── Users ───────────────────────────────────────────────────────────────
+  rpc GetUser(GetUserRequest) returns (UserResponse);
+  rpc GetCurrentUser(google.protobuf.Empty) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+
+  // SSH Keys
+  rpc ListSSHKeys(ListSSHKeysRequest) returns (ListSSHKeysResponse);
+  rpc AddSSHKey(AddSSHKeyRequest) returns (SSHKeyResponse);
+  rpc DeleteSSHKey(DeleteSSHKeyRequest) returns (google.protobuf.Empty);
+
+  // ─── Repositories ────────────────────────────────────────────────────────
+  rpc CreateRepository(CreateRepoRequest) returns (RepositoryResponse);
+  rpc GetRepository(GetRepoRequest) returns (RepositoryResponse);
+  rpc ListRepositories(ListReposRequest) returns (ListReposResponse);
+  rpc ListUserRepositories(ListUserReposRequest) returns (ListReposResponse);
+  rpc ListOrgRepositories(ListOrgReposRequest) returns (ListReposResponse);
+  rpc UpdateRepository(UpdateRepoRequest) returns (RepositoryResponse);
+  rpc DeleteRepository(DeleteRepoRequest) returns (google.protobuf.Empty);
+  rpc RenameRepository(RenameRepoRequest) returns (RepositoryResponse);
+
+  // Repository Content (proxied from git server)
+  rpc GetRepositoryTree(GetRepoTreeRequest) returns (RepoTreeResponse);
+  rpc GetFileBlob(GetFileBlobRequest) returns (FileBlobResponse);
+  rpc ListBranches(ListBranchesRequest) returns (ListBranchesResponse);
+  rpc GetDefaultBranch(GetDefaultBranchRequest) returns (DefaultBranchResponse);
+  rpc SetDefaultBranch(SetDefaultBranchRequest) returns (DefaultBranchResponse);
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+  rpc CreateTag(CreateTagRequest) returns (TagDetailResponse);
+  rpc DeleteTag(DeleteTagRequest) returns (google.protobuf.Empty);
+  rpc ListCommits(ListCommitsRequest) returns (ListCommitsResponse);
+  rpc GetCommit(GetCommitRequest) returns (CommitDetailResponse);
+  rpc GetRepositoryStats(GetRepoStatsRequest) returns (RepoStatsResponse);
+  rpc GetCloneURLs(GetCloneURLsRequest) returns (CloneURLsResponse);
+  rpc CompareBranches(CompareBranchesRequest) returns (CompareResponse);
+  rpc CompareCommits(CompareCommitsRequest) returns (CompareResponse);
+  rpc GetFileHistory(GetFileHistoryRequest) returns (GetFileHistoryResponse);
+  rpc SearchCommits(SearchCommitsRequest) returns (ListCommitsResponse);
+  rpc CheckPath(CheckPathRequest) returns (CheckPathResponse);
+
+  // Collaborators
+  rpc ListCollaborators(ListCollaboratorsRequest) returns (ListCollaboratorsResponse);
+  rpc AddCollaborator(AddCollaboratorRequest) returns (google.protobuf.Empty);
+  rpc RemoveCollaborator(RemoveCollaboratorRequest) returns (google.protobuf.Empty);
+  rpc UpdateCollaborator(UpdateCollaboratorRequest) returns (google.protobuf.Empty);
+
+  // ─── Organizations ───────────────────────────────────────────────────────
+  rpc CreateOrganization(CreateOrgRequest) returns (OrganizationResponse);
+  rpc GetOrganization(GetOrgRequest) returns (OrganizationResponse);
+  rpc ListOrganizations(ListOrgsRequest) returns (ListOrgsResponse);
+  rpc ListUserOrganizations(ListUserOrgsRequest) returns (ListOrgsResponse);
+  rpc UpdateOrganization(UpdateOrgRequest) returns (OrganizationResponse);
+  rpc DeleteOrganization(DeleteOrgRequest) returns (google.protobuf.Empty);
+
+  // Org Members
+  rpc ListOrgMembers(ListOrgMembersRequest) returns (ListOrgMembersResponse);
+  rpc AddOrgMember(AddOrgMemberRequest) returns (OrgMemberResponse);
+  rpc UpdateOrgMember(UpdateOrgMemberRequest) returns (OrgMemberResponse);
+  rpc RemoveOrgMember(RemoveOrgMemberRequest) returns (google.protobuf.Empty);
+  rpc GetOrgMembership(GetOrgMembershipRequest) returns (OrgMemberResponse);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Auth Messages
+// ═══════════════════════════════════════════════════════════════
+
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  optional string display_name = 4;
+}
+
+message LoginRequest {
+  string login = 1;   // username or email
+  string password = 2;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message AuthResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64  expires_in = 3;     // seconds
+  UserResponse user = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// User Messages
+// ═══════════════════════════════════════════════════════════════
+
+message UserResponse {
+  string uuid = 1;
+  string username = 2;
+  string email = 3;
+  string display_name = 4;
+  string bio = 5;
+  string avatar_url = 6;
+  bool   is_admin = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message GetUserRequest {
+  string username = 1;
+}
+
+message UpdateUserRequest {
+  optional string display_name = 1;
+  optional string bio = 2;
+  optional string avatar_url = 3;
+  optional string email = 4;
+  optional string password = 5;
+}
+
+message DeleteUserRequest {
+  string username = 1;
+}
+
+message ListUsersRequest {
+  optional int32 page = 1;
+  optional int32 per_page = 2;
+}
+
+message ListUsersResponse {
+  repeated UserResponse users = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 per_page = 4;
+}
+
+// SSH Keys
+message SSHKeyResponse {
+  uint64 id = 1;
+  string name = 2;
+  string public_key = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message ListSSHKeysRequest {
+  string username = 1;
+}
+
+message ListSSHKeysResponse {
+  repeated SSHKeyResponse keys = 1;
+}
+
+message AddSSHKeyRequest {
+  string name = 1;
+  string public_key = 2;
+}
+
+message DeleteSSHKeyRequest {
+  uint64 key_id = 1;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Repository Messages
+// ═══════════════════════════════════════════════════════════════
+
+message RepositoryResponse {
+  string uuid = 1;
+  string name = 2;
+  string description = 3;
+  string default_branch = 4;
+  bool   is_private = 5;
+  bool   is_fork = 6;
+  string owner_type = 7;   // "user" or "org"
+  string owner_name = 8;   // username or org name
+  int32  stars = 9;
+  int32  forks = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+message CreateRepoRequest {
+  string name = 1;
+  optional string description = 2;
+  optional bool   is_private = 3;
+  optional string org_name = 4;  // if set, creates under org; otherwise under current user
+}
+
+message GetRepoRequest {
+  string owner = 1;  // username or org name
+  string name = 2;
+}
+
+message ListReposRequest {
+  optional int32 page = 1;
+  optional int32 per_page = 2;
+  optional bool  include_private = 3;
+}
+
+message ListUserReposRequest {
+  string username = 1;
+  optional int32 page = 2;
+  optional int32 per_page = 3;
+}
+
+message ListOrgReposRequest {
+  string org_name = 1;
+  optional int32 page = 2;
+  optional int32 per_page = 3;
+}
+
+message ListReposResponse {
+  repeated RepositoryResponse repositories = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 per_page = 4;
+}
+
+message UpdateRepoRequest {
+  string owner = 1;
+  string name = 2;
+  optional string description = 3;
+  optional bool   is_private = 4;
+  optional string default_branch = 5;
+}
+
+message DeleteRepoRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message RenameRepoRequest {
+  string owner = 1;
+  string old_name = 2;
+  string new_name = 3;
+}
+
+// Repository Content
+message GetRepoTreeRequest {
+  string owner = 1;
+  string name = 2;
+  optional string ref = 3;
+  optional string path = 4;
+}
+
+message TreeEntryResponse {
+  string name = 1;
+  string path = 2;
+  string mode = 3;
+  int64  size = 4;
+  bool   is_dir = 5;
+  bool   is_submodule = 6;
+}
+
+message RepoTreeResponse {
+  repeated TreeEntryResponse entries = 1;
+  string ref = 2;
+}
+
+message GetFileBlobRequest {
+  string owner = 1;
+  string name = 2;
+  string path = 3;
+  optional string ref = 4;
+}
+
+message FileBlobResponse {
+  bytes  content = 1;
+  int64  size = 2;
+  bool   is_binary = 3;
+  string path = 4;
+}
+
+message ListBranchesRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message BranchResponse {
+  string name = 1;
+  string full_name = 2;
+  string commit_sha = 3;
+}
+
+message ListBranchesResponse {
+  repeated BranchResponse branches = 1;
+}
+
+message GetDefaultBranchRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message SetDefaultBranchRequest {
+  string owner = 1;
+  string name = 2;
+  string branch_name = 3;
+}
+
+message DefaultBranchResponse {
+  string branch_name = 1;
+}
+
+message ListTagsRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message TagResponse {
+  string name = 1;
+  string full_name = 2;
+  string commit_sha = 3;
+  optional string message = 4;
+}
+
+message ListTagsResponse {
+  repeated TagResponse tags = 1;
+}
+
+message CreateTagRequest {
+  string owner = 1;
+  string name = 2;
+  string tag_name = 3;
+  string target = 4;
+  optional string message = 5;
+}
+
+message TagDetailResponse {
+  TagResponse tag = 1;
+  CommitResponse commit = 2;
+}
+
+message DeleteTagRequest {
+  string owner = 1;
+  string name = 2;
+  string tag_name = 3;
+}
+
+message AuthorResponse {
+  string name = 1;
+  string email = 2;
+  google.protobuf.Timestamp when = 3;
+}
+
+message CommitResponse {
+  string sha = 1;
+  AuthorResponse author = 2;
+  AuthorResponse committer = 3;
+  string message = 4;
+  repeated string parent_shas = 5;
+}
+
+message ListCommitsRequest {
+  string owner = 1;
+  string name = 2;
+  optional string ref = 3;
+  optional int32  limit = 4;
+  optional int32  page = 5;
+}
+
+message ListCommitsResponse {
+  repeated CommitResponse commits = 1;
+  int32 page = 2;
+  int32 per_page = 3;
+  bool  has_more = 4;
+}
+
+message GetCommitRequest {
+  string owner = 1;
+  string name = 2;
+  string sha = 3;
+}
+
+message FileDiffResponse {
+  string path = 1;
+  int32  additions = 2;
+  int32  deletions = 3;
+  string status = 4;
+  optional string old_path = 5;
+}
+
+message CommitDetailResponse {
+  CommitResponse commit = 1;
+  repeated FileDiffResponse files = 2;
+  int32 total_additions = 3;
+  int32 total_deletions = 4;
+  int32 files_changed = 5;
+  string patch = 6;
+}
+
+message GetRepoStatsRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message RepoStatsResponse {
+  int64 size_bytes = 1;
+  int64 commit_count = 2;
+  int32 branch_count = 3;
+  int32 tag_count = 4;
+  int32 contributor_count = 5;
+  google.protobuf.Timestamp last_commit = 6;
+  int32 stars = 7;
+  int32 forks = 8;
+}
+
+message GetCloneURLsRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message CloneURLsResponse {
+  string ssh_url = 1;
+  string http_url = 2;
+  string git_url = 3;
+}
+
+message CompareBranchesRequest {
+  string owner = 1;
+  string name = 2;
+  string base_branch = 3;
+  string head_branch = 4;
+}
+
+message CompareCommitsRequest {
+  string owner = 1;
+  string name = 2;
+  string base_sha = 3;
+  string head_sha = 4;
+}
+
+message CompareResponse {
+  repeated CommitResponse commits = 1;
+  repeated FileDiffResponse files = 2;
+  int32 total_additions = 3;
+  int32 total_deletions = 4;
+  int32 files_changed = 5;
+  int32 commits_ahead = 6;
+}
+
+message GetFileHistoryRequest {
+  string owner = 1;
+  string name = 2;
+  string path = 3;
+  optional string ref = 4;
+  optional int32  limit = 5;
+}
+
+message GetFileHistoryResponse {
+  repeated CommitResponse commits = 1;
+}
+
+message SearchCommitsRequest {
+  string owner = 1;
+  string name = 2;
+  string query = 3;
+  optional string author = 4;
+  optional string ref = 5;
+  optional int32  limit = 6;
+}
+
+message CheckPathRequest {
+  string owner = 1;
+  string name = 2;
+  string path = 3;
+  optional string ref = 4;
+}
+
+message CheckPathResponse {
+  bool exists = 1;
+  bool is_dir = 2;
+  bool is_file = 3;
+  optional int64 size = 4;
+}
+
+// Collaborators
+message CollaboratorResponse {
+  string username = 1;
+  string access_level = 2;  // "read", "write", "admin"
+}
+
+message ListCollaboratorsRequest {
+  string owner = 1;
+  string name = 2;
+}
+
+message ListCollaboratorsResponse {
+  repeated CollaboratorResponse collaborators = 1;
+}
+
+message AddCollaboratorRequest {
+  string owner = 1;
+  string name = 2;
+  string username = 3;
+  string access_level = 4;
+}
+
+message RemoveCollaboratorRequest {
+  string owner = 1;
+  string name = 2;
+  string username = 3;
+}
+
+message UpdateCollaboratorRequest {
+  string owner = 1;
+  string name = 2;
+  string username = 3;
+  string access_level = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Organization Messages
+// ═══════════════════════════════════════════════════════════════
+
+message OrganizationResponse {
+  string uuid = 1;
+  string name = 2;
+  string display_name = 3;
+  string description = 4;
+  string avatar_url = 5;
+  string owner_username = 6;
+  int32  member_count = 7;
+  int32  repo_count = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message CreateOrgRequest {
+  string name = 1;
+  optional string display_name = 2;
+  optional string description = 3;
+}
+
+message GetOrgRequest {
+  string name = 1;
+}
+
+message ListOrgsRequest {
+  optional int32 page = 1;
+  optional int32 per_page = 2;
+}
+
+message ListUserOrgsRequest {
+  string username = 1;
+}
+
+message ListOrgsResponse {
+  repeated OrganizationResponse organizations = 1;
+  int32 total = 2;
+}
+
+message UpdateOrgRequest {
+  string name = 1;
+  optional string display_name = 2;
+  optional string description = 3;
+  optional string avatar_url = 4;
+}
+
+message DeleteOrgRequest {
+  string name = 1;
+}
+
+// Org Members
+message OrgMemberResponse {
+  UserResponse user = 1;
+  string role = 2;  // "owner" or "member"
+  google.protobuf.Timestamp joined_at = 3;
+}
+
+message ListOrgMembersRequest {
+  string org_name = 1;
+}
+
+message ListOrgMembersResponse {
+  repeated OrgMemberResponse members = 1;
+}
+
+message AddOrgMemberRequest {
+  string org_name = 1;
+  string username = 2;
+  string role = 3;  // "owner" or "member"
+}
+
+message UpdateOrgMemberRequest {
+  string org_name = 1;
+  string username = 2;
+  string role = 3;
+}
+
+message RemoveOrgMemberRequest {
+  string org_name = 1;
+  string username = 2;
+}
+
+message GetOrgMembershipRequest {
+  string org_name = 1;
+  string username = 2;
+}
