@@ -159,8 +159,6 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 		gitOwnerUsername = user.GitUsername
 	}
 
-	gitRepoName := fmt.Sprintf("%s/%s", gitOwnerUsername, name)
-
 	// Vérifier doublon en DB
 	var existing models.Repository
 	if err := orm.DB.Where("owner_id = ? AND owner_type = ? AND name = ?", ownerID, ownerType, name).First(&existing).Error; err == nil {
@@ -169,8 +167,10 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 
 	// Créer dans soft-serve
 	_, err := gitClient.GitClient.CreateRepository(ctx, &ssgrpc.CreateRepositoryRequest{
-		Name:    gitRepoName,
-		Private: isPrivate,
+		Name:        name,
+		Description: description,
+		Username:    gitOwnerUsername,
+		Private:     isPrivate,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create git repository: %v", err)
@@ -181,12 +181,12 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 		Description:   description,
 		IsPrivate:     isPrivate,
 		DefaultBranch: "main",
-		GitRepoName:   gitRepoName,
+		GitRepoName:   name,
 		OwnerID:       ownerID,
 		OwnerType:     ownerType,
 	}
 	if err := orm.DB.Create(repo).Error; err != nil {
-		_ = gitClient.GitClient.DeleteRepository(ctx, &ssgrpc.DeleteRepositoryRequest{Name: gitRepoName})
+		_ = gitClient.GitClient.DeleteRepository(ctx, &ssgrpc.DeleteRepositoryRequest{Name: name})
 		return nil, status.Errorf(codes.Internal, "failed to persist repository: %v", err)
 	}
 	return repo, nil
