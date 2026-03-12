@@ -1,0 +1,426 @@
+scalar Time
+
+# ═══════════════════════════════════════════════════════════════
+# Auth
+# ═══════════════════════════════════════════════════════════════
+
+type AuthResponse {
+  accessToken: String!
+  refreshToken: String!
+  expiresIn: Int!
+  user: User!
+}
+
+input RegisterInput {
+  username: String!
+  email:    String!
+  password: String!
+  displayName: String
+}
+
+input LoginInput {
+  login:    String!
+  password: String!
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Users
+# ═══════════════════════════════════════════════════════════════
+
+type User {
+  uuid:        String!
+  username:    String!
+  email:       String!
+  displayName: String!
+  bio:         String!
+  avatarUrl:   String!
+  isAdmin:     Boolean!
+  createdAt:   Time!
+}
+
+input UpdateUserInput {
+  displayName: String
+  bio:         String
+  avatarUrl:   String
+  email:       String
+  password:    String
+}
+
+type ListUsersResponse {
+  users:   [User!]!
+  total:   Int!
+  page:    Int!
+  perPage: Int!
+}
+
+# ─── SSH Keys ────────────────────────────────────────────────────────────────
+
+type SSHKey {
+  id:        String!
+  name:      String!
+  publicKey: String!
+  createdAt: Time!
+}
+
+type ListSSHKeysResponse {
+  keys: [SSHKey!]!
+}
+
+input AddSSHKeyInput {
+  name:      String!
+  publicKey: String!
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Repositories
+# ═══════════════════════════════════════════════════════════════
+
+type Repository {
+  uuid:          String!
+  name:          String!
+  description:   String!
+  defaultBranch: String!
+  isPrivate:     Boolean!
+  isFork:        Boolean!
+  ownerType:     String!
+  ownerName:     String!
+  stars:         Int!
+  forks:         Int!
+  createdAt:     Time!
+  updatedAt:     Time!
+}
+
+input CreateRepoInput {
+  name:        String!
+  description: String
+  isPrivate:   Boolean
+  orgName:     String
+}
+
+input UpdateRepoInput {
+  owner:         String!
+  name:          String!
+  description:   String
+  isPrivate:     Boolean
+  defaultBranch: String
+}
+
+input RenameRepoInput {
+  owner:   String!
+  oldName: String!
+  newName: String!
+}
+
+type ListReposResponse {
+  repositories: [Repository!]!
+  total:        Int!
+  page:         Int!
+  perPage:      Int!
+}
+
+# ─── Repository Content ───────────────────────────────────────────────────────
+
+type TreeEntry {
+  name:        String!
+  path:        String!
+  mode:        String!
+  size:        Int!
+  isDir:       Boolean!
+  isSubmodule: Boolean!
+}
+
+type RepoTreeResponse {
+  entries: [TreeEntry!]!
+  ref:     String!
+}
+
+type FileBlob {
+  content:  String!
+  size:     Int!
+  isBinary: Boolean!
+  path:     String!
+}
+
+type Branch {
+  name:      String!
+  fullName:  String!
+  commitSha: String!
+}
+
+type ListBranchesResponse {
+  branches: [Branch!]!
+}
+
+type DefaultBranchResponse {
+  branchName: String!
+}
+
+type Tag {
+  name:      String!
+  fullName:  String!
+  commitSha: String!
+  message:   String
+}
+
+type ListTagsResponse {
+  tags: [Tag!]!
+}
+
+input CreateTagInput {
+  owner:   String!
+  name:    String!
+  tagName: String!
+  target:  String!
+  message: String
+}
+
+type Author {
+  name:  String!
+  email: String!
+  when:  Time!
+}
+
+type Commit {
+  sha:        String!
+  author:     Author!
+  committer:  Author!
+  message:    String!
+  parentShas: [String!]!
+}
+
+type TagDetail {
+  tag:    Tag!
+  commit: Commit!
+}
+
+type ListCommitsResponse {
+  commits: [Commit!]!
+  page:    Int!
+  perPage: Int!
+  hasMore: Boolean!
+}
+
+type FileDiff {
+  path:      String!
+  additions: Int!
+  deletions: Int!
+  status:    String!
+  oldPath:   String
+}
+
+type CommitDetail {
+  commit:          Commit!
+  files:           [FileDiff!]!
+  totalAdditions:  Int!
+  totalDeletions:  Int!
+  filesChanged:    Int!
+  patch:           String!
+}
+
+type RepoStats {
+  sizeBytes:        Int!
+  commitCount:      Int!
+  branchCount:      Int!
+  tagCount:         Int!
+  contributorCount: Int!
+  lastCommit:       Time!
+  stars:            Int!
+  forks:            Int!
+}
+
+type CloneURLs {
+  sshUrl:  String!
+  httpUrl: String!
+  gitUrl:  String!
+}
+
+type CompareResponse {
+  commits:         [Commit!]!
+  files:           [FileDiff!]!
+  totalAdditions:  Int!
+  totalDeletions:  Int!
+  filesChanged:    Int!
+  commitsAhead:    Int!
+}
+
+type FileHistoryResponse {
+  commits: [Commit!]!
+}
+
+type CheckPathResponse {
+  exists: Boolean!
+  isDir:  Boolean!
+  isFile: Boolean!
+  size:   Int
+}
+
+# ─── Collaborators ────────────────────────────────────────────────────────────
+
+type Collaborator {
+  username:    String!
+  accessLevel: String!
+}
+
+type ListCollaboratorsResponse {
+  collaborators: [Collaborator!]!
+}
+
+input AddCollaboratorInput {
+  owner:       String!
+  name:        String!
+  username:    String!
+  accessLevel: String!
+}
+
+input UpdateCollaboratorInput {
+  owner:       String!
+  name:        String!
+  username:    String!
+  accessLevel: String!
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Organizations
+# ═══════════════════════════════════════════════════════════════
+
+type Organization {
+  uuid:          String!
+  name:          String!
+  displayName:   String!
+  description:   String!
+  avatarUrl:     String!
+  ownerUsername: String!
+  memberCount:   Int!
+  repoCount:     Int!
+  createdAt:     Time!
+}
+
+input CreateOrgInput {
+  name:        String!
+  displayName: String
+  description: String
+}
+
+input UpdateOrgInput {
+  name:        String!
+  displayName: String
+  description: String
+  avatarUrl:   String
+}
+
+type ListOrgsResponse {
+  organizations: [Organization!]!
+  total:         Int!
+}
+
+type OrgMember {
+  user:     User!
+  role:     String!
+  joinedAt: Time!
+}
+
+type ListOrgMembersResponse {
+  members: [OrgMember!]!
+}
+
+input AddOrgMemberInput {
+  orgName:  String!
+  username: String!
+  role:     String!
+}
+
+input UpdateOrgMemberInput {
+  orgName:  String!
+  username: String!
+  role:     String!
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Queries
+# ═══════════════════════════════════════════════════════════════
+
+type Query {
+  # Users
+  getUser(username: String!): User!
+  getCurrentUser: User!
+  listUsers(page: Int, perPage: Int): ListUsersResponse!
+  listSSHKeys(username: String!): ListSSHKeysResponse!
+
+  # Repositories
+  getRepository(owner: String!, name: String!): Repository!
+  listRepositories(page: Int, perPage: Int, includePrivate: Boolean): ListReposResponse!
+  listUserRepositories(username: String!, page: Int, perPage: Int): ListReposResponse!
+  listOrgRepositories(orgName: String!, page: Int, perPage: Int): ListReposResponse!
+
+  # Repository Content
+  getRepositoryTree(owner: String!, name: String!, ref: String, path: String): RepoTreeResponse!
+  getFileBlob(owner: String!, name: String!, path: String!, ref: String): FileBlob!
+  listBranches(owner: String!, name: String!): ListBranchesResponse!
+  getDefaultBranch(owner: String!, name: String!): DefaultBranchResponse!
+  listTags(owner: String!, name: String!): ListTagsResponse!
+  listCommits(owner: String!, name: String!, ref: String, limit: Int, page: Int): ListCommitsResponse!
+  getCommit(owner: String!, name: String!, sha: String!): CommitDetail!
+  getRepositoryStats(owner: String!, name: String!): RepoStats!
+  getCloneURLs(owner: String!, name: String!): CloneURLs!
+  compareBranches(owner: String!, name: String!, baseBranch: String!, headBranch: String!): CompareResponse!
+  compareCommits(owner: String!, name: String!, baseSha: String!, headSha: String!): CompareResponse!
+  getFileHistory(owner: String!, name: String!, path: String!, ref: String, limit: Int): FileHistoryResponse!
+  searchCommits(owner: String!, name: String!, query: String!, author: String, ref: String, limit: Int): ListCommitsResponse!
+  checkPath(owner: String!, name: String!, path: String!, ref: String): CheckPathResponse!
+
+  # Collaborators
+  listCollaborators(owner: String!, name: String!): ListCollaboratorsResponse!
+
+  # Organizations
+  getOrganization(name: String!): Organization!
+  listOrganizations(page: Int, perPage: Int): ListOrgsResponse!
+  listUserOrganizations(username: String!): ListOrgsResponse!
+  listOrgMembers(orgName: String!): ListOrgMembersResponse!
+  getOrgMembership(orgName: String!, username: String!): OrgMember!
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Mutations
+# ═══════════════════════════════════════════════════════════════
+
+type Mutation {
+  # Auth
+  register(input: RegisterInput!): AuthResponse!
+  login(input: LoginInput!): AuthResponse!
+  refreshToken(refreshToken: String!): AuthResponse!
+
+  # Users
+  updateUser(input: UpdateUserInput!): User!
+  deleteUser(username: String!): Boolean!
+
+  # SSH Keys
+  addSSHKey(input: AddSSHKeyInput!): SSHKey!
+  deleteSSHKey(keyId: String!): Boolean!
+
+  # Repositories
+  createRepository(input: CreateRepoInput!): Repository!
+  updateRepository(input: UpdateRepoInput!): Repository!
+  deleteRepository(owner: String!, name: String!): Boolean!
+  renameRepository(input: RenameRepoInput!): Repository!
+
+  # Repository Content
+  setDefaultBranch(owner: String!, name: String!, branchName: String!): DefaultBranchResponse!
+  createTag(input: CreateTagInput!): TagDetail!
+  deleteTag(owner: String!, name: String!, tagName: String!): Boolean!
+
+  # Collaborators
+  addCollaborator(input: AddCollaboratorInput!): Boolean!
+  removeCollaborator(owner: String!, name: String!, username: String!): Boolean!
+  updateCollaborator(input: UpdateCollaboratorInput!): Boolean!
+
+  # Organizations
+  createOrganization(input: CreateOrgInput!): Organization!
+  updateOrganization(input: UpdateOrgInput!): Organization!
+  deleteOrganization(name: String!): Boolean!
+
+  # Org Members
+  addOrgMember(input: AddOrgMemberInput!): OrgMember!
+  updateOrgMember(input: UpdateOrgMemberInput!): OrgMember!
+  removeOrgMember(orgName: String!, username: String!): Boolean!
+}
+
