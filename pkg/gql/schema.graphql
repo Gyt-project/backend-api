@@ -335,6 +335,248 @@ input UpdateOrgMemberInput {
   role:     String!
 }
 
+# ─── Stars ────────────────────────────────────────────────────────────────────
+
+type ListStargazersResponse {
+  users: [User!]!
+  total: Int!
+}
+
+type CheckStarResponse {
+  starred: Boolean!
+}
+
+# ─── Labels ───────────────────────────────────────────────────────────────────
+
+type Label {
+  id:          String!
+  name:        String!
+  color:       String!
+  description: String!
+}
+
+type ListLabelsResponse {
+  labels: [Label!]!
+}
+
+input CreateLabelInput {
+  owner:       String!
+  repo:        String!
+  name:        String!
+  color:       String!
+  description: String
+}
+
+input UpdateLabelInput {
+  owner:       String!
+  repo:        String!
+  name:        String!
+  newName:     String
+  color:       String
+  description: String
+}
+
+# ─── Issues ───────────────────────────────────────────────────────────────────
+
+type Issue {
+  id:           String!
+  number:       Int!
+  title:        String!
+  body:         String!
+  state:        String!
+  author:       User!
+  assignees:    [User!]!
+  labels:       [Label!]!
+  commentCount: Int!
+  createdAt:    Time!
+  updatedAt:    Time!
+  closedAt:     Time
+}
+
+type IssueComment {
+  id:        String!
+  body:      String!
+  author:    User!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type ListIssuesResponse {
+  issues:  [Issue!]!
+  total:   Int!
+  page:    Int!
+  perPage: Int!
+}
+
+type ListIssueCommentsResponse {
+  comments: [IssueComment!]!
+}
+
+input CreateIssueInput {
+  owner:     String!
+  repo:      String!
+  title:     String!
+  body:      String
+  assignees: [String!]
+  labels:    [String!]
+}
+
+input UpdateIssueInput {
+  owner:  String!
+  repo:   String!
+  number: Int!
+  title:  String
+  body:   String
+}
+
+# ─── Pull Requests ────────────────────────────────────────────────────────────
+
+type PullRequest {
+  id:           String!
+  number:       Int!
+  title:        String!
+  body:         String!
+  state:        String!
+  headBranch:   String!
+  baseBranch:   String!
+  headSha:      String!
+  author:       User!
+  assignees:    [User!]!
+  labels:       [Label!]!
+  mergeable:    Boolean!
+  merged:       Boolean!
+  commentCount: Int!
+  commits:      Int!
+  additions:    Int!
+  deletions:    Int!
+  changedFiles: Int!
+  createdAt:    Time!
+  updatedAt:    Time!
+  mergedAt:     Time
+}
+
+type MergePRResponse {
+  merged:  Boolean!
+  sha:     String!
+  message: String!
+}
+
+type PRComment {
+  id:        String!
+  body:      String!
+  author:    User!
+  path:      String
+  line:      Int
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type PRReview {
+  id:          String!
+  reviewer:    User!
+  state:       String!
+  body:        String!
+  submittedAt: Time!
+}
+
+type ListPRsResponse {
+  pullRequests: [PullRequest!]!
+  total:        Int!
+  page:         Int!
+  perPage:      Int!
+}
+
+type ListPRCommentsResponse {
+  comments: [PRComment!]!
+}
+
+type ListPRReviewsResponse {
+  reviews: [PRReview!]!
+}
+
+input CreatePRInput {
+  owner:      String!
+  repo:       String!
+  title:      String!
+  headBranch: String!
+  baseBranch: String!
+  body:       String
+  assignees:  [String!]
+  labels:     [String!]
+}
+
+input UpdatePRInput {
+  owner:  String!
+  repo:   String!
+  number: Int!
+  title:  String
+  body:   String
+  base:   String
+}
+
+input MergePRInput {
+  owner:         String!
+  repo:          String!
+  number:        Int!
+  mergeMethod:   String
+  commitTitle:   String
+  commitMessage: String
+}
+
+input CreatePRCommentInput {
+  owner:  String!
+  repo:   String!
+  number: Int!
+  body:   String!
+  path:   String
+  line:   Int
+}
+
+input CreatePRReviewInput {
+  owner:  String!
+  repo:   String!
+  number: Int!
+  state:  String!
+  body:   String!
+}
+
+# ─── Webhooks ─────────────────────────────────────────────────────────────────
+
+type Webhook {
+  id:          String!
+  url:         String!
+  events:      [String!]!
+  active:      Boolean!
+  contentType: String!
+  createdAt:   Time!
+  updatedAt:   Time!
+}
+
+type ListWebhooksResponse {
+  webhooks: [Webhook!]!
+}
+
+input CreateWebhookInput {
+  owner:       String!
+  repo:        String
+  url:         String!
+  events:      [String!]!
+  secret:      String
+  active:      Boolean
+  contentType: String
+}
+
+input UpdateWebhookInput {
+  owner:       String!
+  repo:        String
+  id:          String!
+  url:         String
+  events:      [String!]
+  active:      Boolean
+  secret:      String
+  contentType: String
+}
+
 # ═══════════════════════════════════════════════════════════════
 # Queries
 # ═══════════════════════════════════════════════════════════════
@@ -377,6 +619,36 @@ type Query {
   listUserOrganizations(username: String!): ListOrgsResponse!
   listOrgMembers(orgName: String!): ListOrgMembersResponse!
   getOrgMembership(orgName: String!, username: String!): OrgMember!
+
+  # Stars
+  checkStar(owner: String!, name: String!): CheckStarResponse!
+  listStargazers(owner: String!, name: String!, page: Int, perPage: Int): ListStargazersResponse!
+  listStarredRepositories(username: String!, page: Int, perPage: Int): ListReposResponse!
+
+  # Labels
+  listLabels(owner: String!, repo: String!): ListLabelsResponse!
+  getLabel(owner: String!, repo: String!, name: String!): Label!
+
+  # Issues
+  getIssue(owner: String!, repo: String!, number: Int!): Issue!
+  listIssues(owner: String!, repo: String!, state: String, label: String, assignee: String, author: String, page: Int, perPage: Int): ListIssuesResponse!
+  listIssueComments(owner: String!, repo: String!, number: Int!): ListIssueCommentsResponse!
+
+  # Pull Requests
+  getPullRequest(owner: String!, repo: String!, number: Int!): PullRequest!
+  listPullRequests(owner: String!, repo: String!, state: String, author: String, assignee: String, label: String, base: String, page: Int, perPage: Int): ListPRsResponse!
+  getPullRequestDiff(owner: String!, repo: String!, number: Int!): CompareResponse!
+  listPRComments(owner: String!, repo: String!, number: Int!): ListPRCommentsResponse!
+  listPRReviews(owner: String!, repo: String!, number: Int!): ListPRReviewsResponse!
+
+  # Webhooks
+  listWebhooks(owner: String!, repo: String): ListWebhooksResponse!
+  getWebhook(owner: String!, repo: String, id: String!): Webhook!
+
+  # Search
+  searchRepositories(query: String!, language: String, sort: String, order: String, page: Int, perPage: Int): ListReposResponse!
+  searchUsers(query: String!, sort: String, order: String, page: Int, perPage: Int): ListUsersResponse!
+  searchIssues(query: String!, state: String, type: String, owner: String, repo: String, author: String, label: String, sort: String, order: String, page: Int, perPage: Int): ListIssuesResponse!
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -422,5 +694,48 @@ type Mutation {
   addOrgMember(input: AddOrgMemberInput!): OrgMember!
   updateOrgMember(input: UpdateOrgMemberInput!): OrgMember!
   removeOrgMember(orgName: String!, username: String!): Boolean!
+
+  # Stars
+  starRepository(owner: String!, name: String!): Boolean!
+  unstarRepository(owner: String!, name: String!): Boolean!
+
+  # Labels
+  createLabel(input: CreateLabelInput!): Label!
+  updateLabel(input: UpdateLabelInput!): Label!
+  deleteLabel(owner: String!, repo: String!, name: String!): Boolean!
+
+  # Issues
+  createIssue(input: CreateIssueInput!): Issue!
+  updateIssue(input: UpdateIssueInput!): Issue!
+  closeIssue(owner: String!, repo: String!, number: Int!): Issue!
+  reopenIssue(owner: String!, repo: String!, number: Int!): Issue!
+  addIssueLabel(owner: String!, repo: String!, number: Int!, labelName: String!): Boolean!
+  removeIssueLabel(owner: String!, repo: String!, number: Int!, labelName: String!): Boolean!
+  addIssueAssignee(owner: String!, repo: String!, number: Int!, username: String!): Boolean!
+  removeIssueAssignee(owner: String!, repo: String!, number: Int!, username: String!): Boolean!
+  createIssueComment(owner: String!, repo: String!, number: Int!, body: String!): IssueComment!
+  updateIssueComment(owner: String!, repo: String!, commentId: String!, body: String!): IssueComment!
+  deleteIssueComment(owner: String!, repo: String!, commentId: String!): Boolean!
+
+  # Pull Requests
+  createPullRequest(input: CreatePRInput!): PullRequest!
+  updatePullRequest(input: UpdatePRInput!): PullRequest!
+  mergePullRequest(input: MergePRInput!): MergePRResponse!
+  closePullRequest(owner: String!, repo: String!, number: Int!): PullRequest!
+  reopenPullRequest(owner: String!, repo: String!, number: Int!): PullRequest!
+  addPRLabel(owner: String!, repo: String!, number: Int!, labelName: String!): Boolean!
+  removePRLabel(owner: String!, repo: String!, number: Int!, labelName: String!): Boolean!
+  addPRAssignee(owner: String!, repo: String!, number: Int!, username: String!): Boolean!
+  removePRAssignee(owner: String!, repo: String!, number: Int!, username: String!): Boolean!
+  createPRComment(input: CreatePRCommentInput!): PRComment!
+  updatePRComment(owner: String!, repo: String!, commentId: String!, body: String!): PRComment!
+  deletePRComment(owner: String!, repo: String!, commentId: String!): Boolean!
+  createPRReview(input: CreatePRReviewInput!): PRReview!
+
+  # Webhooks
+  createWebhook(input: CreateWebhookInput!): Webhook!
+  updateWebhook(input: UpdateWebhookInput!): Webhook!
+  deleteWebhook(owner: String!, repo: String, id: String!): Boolean!
+  pingWebhook(owner: String!, repo: String, id: String!): Boolean!
 }
 

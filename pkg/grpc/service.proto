@@ -75,6 +75,69 @@ service GytService {
   rpc UpdateOrgMember(UpdateOrgMemberRequest) returns (OrgMemberResponse);
   rpc RemoveOrgMember(RemoveOrgMemberRequest) returns (google.protobuf.Empty);
   rpc GetOrgMembership(GetOrgMembershipRequest) returns (OrgMemberResponse);
+
+  // ─── Stars ───────────────────────────────────────────────────────────────
+  rpc StarRepository(StarRepoRequest) returns (google.protobuf.Empty);
+  rpc UnstarRepository(UnstarRepoRequest) returns (google.protobuf.Empty);
+  rpc CheckStar(CheckStarRequest) returns (CheckStarResponse);
+  rpc ListStargazers(ListStargazersRequest) returns (ListStargazersResponse);
+  rpc ListStarredRepositories(ListStarredReposRequest) returns (ListReposResponse);
+
+  // ─── Labels ──────────────────────────────────────────────────────────────
+  rpc CreateLabel(CreateLabelRequest) returns (LabelResponse);
+  rpc GetLabel(GetLabelRequest) returns (LabelResponse);
+  rpc ListLabels(ListLabelsRequest) returns (ListLabelsResponse);
+  rpc UpdateLabel(UpdateLabelRequest) returns (LabelResponse);
+  rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty);
+
+  // ─── Issues ──────────────────────────────────────────────────────────────
+  rpc CreateIssue(CreateIssueRequest) returns (IssueResponse);
+  rpc GetIssue(GetIssueRequest) returns (IssueResponse);
+  rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse);
+  rpc UpdateIssue(UpdateIssueRequest) returns (IssueResponse);
+  rpc CloseIssue(CloseIssueRequest) returns (IssueResponse);
+  rpc ReopenIssue(ReopenIssueRequest) returns (IssueResponse);
+  rpc AddIssueLabel(AddIssueLabelRequest) returns (google.protobuf.Empty);
+  rpc RemoveIssueLabel(RemoveIssueLabelRequest) returns (google.protobuf.Empty);
+  rpc AddIssueAssignee(AddIssueAssigneeRequest) returns (google.protobuf.Empty);
+  rpc RemoveIssueAssignee(RemoveIssueAssigneeRequest) returns (google.protobuf.Empty);
+  rpc CreateIssueComment(CreateIssueCommentRequest) returns (IssueCommentResponse);
+  rpc ListIssueComments(ListIssueCommentsRequest) returns (ListIssueCommentsResponse);
+  rpc UpdateIssueComment(UpdateIssueCommentRequest) returns (IssueCommentResponse);
+  rpc DeleteIssueComment(DeleteIssueCommentRequest) returns (google.protobuf.Empty);
+
+  // ─── Pull Requests ───────────────────────────────────────────────────────
+  rpc CreatePullRequest(CreatePRRequest) returns (PullRequestResponse);
+  rpc GetPullRequest(GetPRRequest) returns (PullRequestResponse);
+  rpc ListPullRequests(ListPRsRequest) returns (ListPRsResponse);
+  rpc UpdatePullRequest(UpdatePRRequest) returns (PullRequestResponse);
+  rpc MergePullRequest(MergePRRequest) returns (MergePRResponse);
+  rpc ClosePullRequest(ClosePRRequest) returns (PullRequestResponse);
+  rpc ReopenPullRequest(ReopenPRRequest) returns (PullRequestResponse);
+  rpc GetPullRequestDiff(GetPRDiffRequest) returns (CompareResponse);
+  rpc CreatePRComment(CreatePRCommentRequest) returns (PRCommentResponse);
+  rpc ListPRComments(ListPRCommentsRequest) returns (ListPRCommentsResponse);
+  rpc UpdatePRComment(UpdatePRCommentRequest) returns (PRCommentResponse);
+  rpc DeletePRComment(DeletePRCommentRequest) returns (google.protobuf.Empty);
+  rpc CreatePRReview(CreatePRReviewRequest) returns (PRReviewResponse);
+  rpc ListPRReviews(ListPRReviewsRequest) returns (ListPRReviewsResponse);
+  rpc AddPRLabel(AddPRLabelRequest) returns (google.protobuf.Empty);
+  rpc RemovePRLabel(RemovePRLabelRequest) returns (google.protobuf.Empty);
+  rpc AddPRAssignee(AddPRAssigneeRequest) returns (google.protobuf.Empty);
+  rpc RemovePRAssignee(RemovePRAssigneeRequest) returns (google.protobuf.Empty);
+
+  // ─── Webhooks ────────────────────────────────────────────────────────────
+  rpc CreateWebhook(CreateWebhookRequest) returns (WebhookResponse);
+  rpc GetWebhook(GetWebhookRequest) returns (WebhookResponse);
+  rpc ListWebhooks(ListWebhooksRequest) returns (ListWebhooksResponse);
+  rpc UpdateWebhook(UpdateWebhookRequest) returns (WebhookResponse);
+  rpc DeleteWebhook(DeleteWebhookRequest) returns (google.protobuf.Empty);
+  rpc PingWebhook(PingWebhookRequest) returns (google.protobuf.Empty);
+
+  // ─── Search ──────────────────────────────────────────────────────────────
+  rpc SearchRepositories(SearchReposRequest) returns (ListReposResponse);
+  rpc SearchUsers(SearchUsersRequest) returns (ListUsersResponse);
+  rpc SearchIssues(SearchIssuesRequest) returns (ListIssuesResponse);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -607,3 +670,531 @@ message GetOrgMembershipRequest {
   string org_name = 1;
   string username = 2;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Stars Messages
+// ═══════════════════════════════════════════════════════════════
+
+message StarRepoRequest {
+  string owner = 1;
+  string name  = 2;
+}
+
+message UnstarRepoRequest {
+  string owner = 1;
+  string name  = 2;
+}
+
+message CheckStarRequest {
+  string owner = 1;
+  string name  = 2;
+}
+
+message CheckStarResponse {
+  bool starred = 1;
+}
+
+message ListStargazersRequest {
+  string owner            = 1;
+  string name             = 2;
+  optional int32 page     = 3;
+  optional int32 per_page = 4;
+}
+
+message ListStargazersResponse {
+  repeated UserResponse users = 1;
+  int32 total                 = 2;
+}
+
+message ListStarredReposRequest {
+  string username         = 1;
+  optional int32 page     = 2;
+  optional int32 per_page = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Label Messages
+// ═══════════════════════════════════════════════════════════════
+
+message LabelResponse {
+  uint64 id          = 1;
+  string name        = 2;
+  string color       = 3;  // hex color without '#', e.g. "ff0000"
+  string description = 4;
+}
+
+message CreateLabelRequest {
+  string owner                = 1;
+  string repo                 = 2;
+  string name                 = 3;
+  string color                = 4;
+  optional string description = 5;
+}
+
+message GetLabelRequest {
+  string owner = 1;
+  string repo  = 2;
+  string name  = 3;
+}
+
+message ListLabelsRequest {
+  string owner = 1;
+  string repo  = 2;
+}
+
+message ListLabelsResponse {
+  repeated LabelResponse labels = 1;
+}
+
+message UpdateLabelRequest {
+  string owner                = 1;
+  string repo                 = 2;
+  string name                 = 3;
+  optional string new_name    = 4;
+  optional string color       = 5;
+  optional string description = 6;
+}
+
+message DeleteLabelRequest {
+  string owner = 1;
+  string repo  = 2;
+  string name  = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Issue Messages
+// ═══════════════════════════════════════════════════════════════
+
+message IssueResponse {
+  uint64 id                                     = 1;
+  int32  number                                 = 2;
+  string title                                  = 3;
+  string body                                   = 4;
+  string state                                  = 5;  // "open" | "closed"
+  UserResponse author                           = 6;
+  repeated UserResponse assignees               = 7;
+  repeated LabelResponse labels                 = 8;
+  int32  comment_count                          = 9;
+  google.protobuf.Timestamp created_at          = 10;
+  google.protobuf.Timestamp updated_at          = 11;
+  optional google.protobuf.Timestamp closed_at  = 12;
+}
+
+message CreateIssueRequest {
+  string owner              = 1;
+  string repo               = 2;
+  string title              = 3;
+  optional string body      = 4;
+  repeated string assignees = 5;
+  repeated string labels    = 6;
+}
+
+message GetIssueRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ListIssuesRequest {
+  string owner             = 1;
+  string repo              = 2;
+  optional string state    = 3;  // "open" | "closed" | "all"
+  optional string label    = 4;
+  optional string assignee = 5;
+  optional string author   = 6;
+  optional int32  page     = 7;
+  optional int32  per_page = 8;
+}
+
+message ListIssuesResponse {
+  repeated IssueResponse issues = 1;
+  int32 total                   = 2;
+  int32 page                    = 3;
+  int32 per_page                = 4;
+}
+
+message UpdateIssueRequest {
+  string owner          = 1;
+  string repo           = 2;
+  int32  number         = 3;
+  optional string title = 4;
+  optional string body  = 5;
+}
+
+message CloseIssueRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ReopenIssueRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message AddIssueLabelRequest {
+  string owner      = 1;
+  string repo       = 2;
+  int32  number     = 3;
+  string label_name = 4;
+}
+
+message RemoveIssueLabelRequest {
+  string owner      = 1;
+  string repo       = 2;
+  int32  number     = 3;
+  string label_name = 4;
+}
+
+message AddIssueAssigneeRequest {
+  string owner    = 1;
+  string repo     = 2;
+  int32  number   = 3;
+  string username = 4;
+}
+
+message RemoveIssueAssigneeRequest {
+  string owner    = 1;
+  string repo     = 2;
+  int32  number   = 3;
+  string username = 4;
+}
+
+message IssueCommentResponse {
+  uint64 id                            = 1;
+  string body                          = 2;
+  UserResponse author                  = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message CreateIssueCommentRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+  string body   = 4;
+}
+
+message ListIssueCommentsRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ListIssueCommentsResponse {
+  repeated IssueCommentResponse comments = 1;
+}
+
+message UpdateIssueCommentRequest {
+  string owner      = 1;
+  string repo       = 2;
+  uint64 comment_id = 3;
+  string body       = 4;
+}
+
+message DeleteIssueCommentRequest {
+  string owner      = 1;
+  string repo       = 2;
+  uint64 comment_id = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Pull Request Messages
+// ═══════════════════════════════════════════════════════════════
+
+message PullRequestResponse {
+  uint64 id                                     = 1;
+  int32  number                                 = 2;
+  string title                                  = 3;
+  string body                                   = 4;
+  string state                                  = 5;  // "open" | "closed" | "merged"
+  string head_branch                            = 6;
+  string base_branch                            = 7;
+  string head_sha                               = 8;
+  UserResponse author                           = 9;
+  repeated UserResponse assignees               = 10;
+  repeated LabelResponse labels                 = 11;
+  bool   mergeable                              = 12;
+  bool   merged                                 = 13;
+  int32  comment_count                          = 14;
+  int32  commits                                = 15;
+  int32  additions                              = 16;
+  int32  deletions                              = 17;
+  int32  changed_files                          = 18;
+  google.protobuf.Timestamp created_at          = 19;
+  google.protobuf.Timestamp updated_at          = 20;
+  optional google.protobuf.Timestamp merged_at  = 21;
+}
+
+message CreatePRRequest {
+  string owner              = 1;
+  string repo               = 2;
+  string title              = 3;
+  string head_branch        = 4;
+  string base_branch        = 5;
+  optional string body      = 6;
+  repeated string assignees = 7;
+  repeated string labels    = 8;
+}
+
+message GetPRRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ListPRsRequest {
+  string owner             = 1;
+  string repo              = 2;
+  optional string state    = 3;  // "open" | "closed" | "merged" | "all"
+  optional string author   = 4;
+  optional string assignee = 5;
+  optional string label    = 6;
+  optional string base     = 7;
+  optional int32  page     = 8;
+  optional int32  per_page = 9;
+}
+
+message ListPRsResponse {
+  repeated PullRequestResponse pull_requests = 1;
+  int32 total                                = 2;
+  int32 page                                 = 3;
+  int32 per_page                             = 4;
+}
+
+message UpdatePRRequest {
+  string owner          = 1;
+  string repo           = 2;
+  int32  number         = 3;
+  optional string title = 4;
+  optional string body  = 5;
+  optional string base  = 6;
+}
+
+message MergePRRequest {
+  string owner                   = 1;
+  string repo                    = 2;
+  int32  number                  = 3;
+  optional string merge_method   = 4;  // "merge" | "squash" | "rebase"
+  optional string commit_title   = 5;
+  optional string commit_message = 6;
+}
+
+message MergePRResponse {
+  bool   merged  = 1;
+  string sha     = 2;
+  string message = 3;
+}
+
+message ClosePRRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ReopenPRRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message GetPRDiffRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message PRCommentResponse {
+  uint64 id                            = 1;
+  string body                          = 2;
+  UserResponse author                  = 3;
+  optional string path                 = 4;  // file path for inline comments
+  optional int32  line                 = 5;  // line number for inline comments
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message CreatePRCommentRequest {
+  string owner         = 1;
+  string repo          = 2;
+  int32  number        = 3;
+  string body          = 4;
+  optional string path = 5;
+  optional int32  line = 6;
+}
+
+message ListPRCommentsRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ListPRCommentsResponse {
+  repeated PRCommentResponse comments = 1;
+}
+
+message UpdatePRCommentRequest {
+  string owner      = 1;
+  string repo       = 2;
+  uint64 comment_id = 3;
+  string body       = 4;
+}
+
+message DeletePRCommentRequest {
+  string owner      = 1;
+  string repo       = 2;
+  uint64 comment_id = 3;
+}
+
+message PRReviewResponse {
+  uint64 id                              = 1;
+  UserResponse reviewer                  = 2;
+  string state                           = 3;  // "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED"
+  string body                            = 4;
+  google.protobuf.Timestamp submitted_at = 5;
+}
+
+message CreatePRReviewRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+  string state  = 4;  // "APPROVE" | "REQUEST_CHANGES" | "COMMENT"
+  string body   = 5;
+}
+
+message ListPRReviewsRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ListPRReviewsResponse {
+  repeated PRReviewResponse reviews = 1;
+}
+
+message AddPRLabelRequest {
+  string owner      = 1;
+  string repo       = 2;
+  int32  number     = 3;
+  string label_name = 4;
+}
+
+message RemovePRLabelRequest {
+  string owner      = 1;
+  string repo       = 2;
+  int32  number     = 3;
+  string label_name = 4;
+}
+
+message AddPRAssigneeRequest {
+  string owner    = 1;
+  string repo     = 2;
+  int32  number   = 3;
+  string username = 4;
+}
+
+message RemovePRAssigneeRequest {
+  string owner    = 1;
+  string repo     = 2;
+  int32  number   = 3;
+  string username = 4;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Webhook Messages
+// ═══════════════════════════════════════════════════════════════
+
+message WebhookResponse {
+  uint64 id                            = 1;
+  string url                           = 2;
+  repeated string events               = 3;
+  bool   active                        = 4;
+  string content_type                  = 5;  // "json" | "form"
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message CreateWebhookRequest {
+  string owner                  = 1;
+  optional string repo          = 2;  // if absent → org-level webhook
+  string url                    = 3;
+  repeated string events        = 4;
+  optional string secret        = 5;
+  optional bool   active        = 6;
+  optional string content_type  = 7;
+}
+
+message GetWebhookRequest {
+  string owner         = 1;
+  optional string repo = 2;
+  uint64 id            = 3;
+}
+
+message ListWebhooksRequest {
+  string owner         = 1;
+  optional string repo = 2;
+}
+
+message ListWebhooksResponse {
+  repeated WebhookResponse webhooks = 1;
+}
+
+message UpdateWebhookRequest {
+  string owner                  = 1;
+  optional string repo          = 2;
+  uint64 id                     = 3;
+  optional string url           = 4;
+  repeated string events        = 5;
+  optional bool   active        = 6;
+  optional string secret        = 7;
+  optional string content_type  = 8;
+}
+
+message DeleteWebhookRequest {
+  string owner         = 1;
+  optional string repo = 2;
+  uint64 id            = 3;
+}
+
+message PingWebhookRequest {
+  string owner         = 1;
+  optional string repo = 2;
+  uint64 id            = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Search Messages
+// ═══════════════════════════════════════════════════════════════
+
+message SearchReposRequest {
+  string query              = 1;
+  optional string language  = 2;
+  optional string sort      = 3;  // "stars" | "forks" | "updated"
+  optional string order     = 4;  // "asc" | "desc"
+  optional int32  page      = 5;
+  optional int32  per_page  = 6;
+}
+
+message SearchUsersRequest {
+  string query             = 1;
+  optional string sort     = 2;  // "joined" | "repositories"
+  optional string order    = 3;  // "asc" | "desc"
+  optional int32  page     = 4;
+  optional int32  per_page = 5;
+}
+
+message SearchIssuesRequest {
+  string query             = 1;
+  optional string state    = 2;  // "open" | "closed"
+  optional string type     = 3;  // "issue" | "pr"
+  optional string owner    = 4;
+  optional string repo     = 5;
+  optional string author   = 6;
+  optional string label    = 7;
+  optional string sort     = 8;  // "created" | "updated" | "comments"
+  optional string order    = 9;  // "asc" | "desc"
+  optional int32  page     = 10;
+  optional int32  per_page = 11;
+}
+

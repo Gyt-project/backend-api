@@ -19,16 +19,28 @@ import (
 // GytServer implémente pb.GytServiceServer
 type GytServer struct {
 	pb.UnimplementedGytServiceServer
-	Users *service.UserService
-	Repos *service.RepoService
-	Orgs  *service.OrgService
+	Users   *service.UserService
+	Repos   *service.RepoService
+	Orgs    *service.OrgService
+	Stars   *service.StarService
+	Labels  *service.LabelService
+	Issues  *service.IssueService
+	PRs     *service.PRService
+	Webhooks *service.WebhookService
+	Search  *service.SearchService
 }
 
 func NewGytServer() *GytServer {
 	return &GytServer{
-		Users: &service.UserService{},
-		Repos: &service.RepoService{},
-		Orgs:  &service.OrgService{},
+		Users:   &service.UserService{},
+		Repos:   &service.RepoService{},
+		Orgs:    &service.OrgService{},
+		Stars:   &service.StarService{},
+		Labels:  &service.LabelService{},
+		Issues:  &service.IssueService{},
+		PRs:     &service.PRService{},
+		Webhooks: &service.WebhookService{},
+		Search:  &service.SearchService{},
 	}
 }
 
@@ -715,3 +727,490 @@ func (s *GytServer) GetOrgMembership(ctx context.Context, req *pb.GetOrgMembersh
 		JoinedAt: timestamppb.New(m.CreatedAt),
 	}, nil
 }
+
+// ─── Stars ────────────────────────────────────────────────────────────────────
+
+func (s *GytServer) StarRepository(ctx context.Context, req *pb.StarRepoRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.Stars.StarRepository(ctx, callerID, req.GetOwner(), req.GetName())
+}
+
+func (s *GytServer) UnstarRepository(ctx context.Context, req *pb.UnstarRepoRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.Stars.UnstarRepository(ctx, callerID, req.GetOwner(), req.GetName())
+}
+
+func (s *GytServer) CheckStar(ctx context.Context, req *pb.CheckStarRequest) (*pb.CheckStarResponse, error) {
+	callerID, _ := auth.ExtractUserID(ctx)
+	starred, err := s.Stars.CheckStar(ctx, callerID, req.GetOwner(), req.GetName())
+	if err != nil {
+		return nil, err
+	}
+	return &pb.CheckStarResponse{Starred: starred}, nil
+}
+
+func (s *GytServer) ListStargazers(ctx context.Context, req *pb.ListStargazersRequest) (*pb.ListStargazersResponse, error) {
+	users, total, err := s.Stars.ListStargazers(ctx, req.GetOwner(), req.GetName(), int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	return stargazersToProto(users, total), nil
+}
+
+func (s *GytServer) ListStarredRepositories(ctx context.Context, req *pb.ListStarredReposRequest) (*pb.ListReposResponse, error) {
+	repos, total, err := s.Stars.ListStarredRepositories(ctx, req.GetUsername(), int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	return reposToListResponse(repos, total, req.GetPage(), req.GetPerPage(), s.Repos), nil
+}
+
+// ─── Labels ───────────────────────────────────────────────────────────────────
+
+func (s *GytServer) CreateLabel(ctx context.Context, req *pb.CreateLabelRequest) (*pb.LabelResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	label, err := s.Labels.CreateLabel(ctx, callerID, req.GetOwner(), req.GetRepo(), req.GetName(), req.GetColor(), req.Description)
+	if err != nil {
+		return nil, err
+	}
+	return labelToProto(label), nil
+}
+
+func (s *GytServer) GetLabel(ctx context.Context, req *pb.GetLabelRequest) (*pb.LabelResponse, error) {
+	label, err := s.Labels.GetLabel(ctx, req.GetOwner(), req.GetRepo(), req.GetName())
+	if err != nil {
+		return nil, err
+	}
+	return labelToProto(label), nil
+}
+
+func (s *GytServer) ListLabels(ctx context.Context, req *pb.ListLabelsRequest) (*pb.ListLabelsResponse, error) {
+	labels, err := s.Labels.ListLabels(ctx, req.GetOwner(), req.GetRepo())
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListLabelsResponse{}
+	for i := range labels {
+		resp.Labels = append(resp.Labels, labelToProto(&labels[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdateLabel(ctx context.Context, req *pb.UpdateLabelRequest) (*pb.LabelResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	label, err := s.Labels.UpdateLabel(ctx, callerID, req.GetOwner(), req.GetRepo(), req.GetName(), req.NewName, req.Color, req.Description)
+	if err != nil {
+		return nil, err
+	}
+	return labelToProto(label), nil
+}
+
+func (s *GytServer) DeleteLabel(ctx context.Context, req *pb.DeleteLabelRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.Labels.DeleteLabel(ctx, callerID, req.GetOwner(), req.GetRepo(), req.GetName())
+}
+
+// ─── Issues ───────────────────────────────────────────────────────────────────
+
+func (s *GytServer) CreateIssue(ctx context.Context, req *pb.CreateIssueRequest) (*pb.IssueResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	issue, err := s.Issues.CreateIssue(ctx, callerID, req.GetOwner(), req.GetRepo(), req.GetTitle(), req.Body, req.GetAssignees(), req.GetLabels())
+	if err != nil {
+		return nil, err
+	}
+	return issueToProto(issue), nil
+}
+
+func (s *GytServer) GetIssue(ctx context.Context, req *pb.GetIssueRequest) (*pb.IssueResponse, error) {
+	issue, err := s.Issues.GetIssue(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return issueToProto(issue), nil
+}
+
+func (s *GytServer) ListIssues(ctx context.Context, req *pb.ListIssuesRequest) (*pb.ListIssuesResponse, error) {
+	issues, total, err := s.Issues.ListIssues(ctx, req.GetOwner(), req.GetRepo(), req.State, req.Label, req.Assignee, req.Author, int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListIssuesResponse{Total: int32(total), Page: req.GetPage(), PerPage: req.GetPerPage()}
+	for i := range issues {
+		resp.Issues = append(resp.Issues, issueToProto(&issues[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdateIssue(ctx context.Context, req *pb.UpdateIssueRequest) (*pb.IssueResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	issue, err := s.Issues.UpdateIssue(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.Title, req.Body)
+	if err != nil {
+		return nil, err
+	}
+	return issueToProto(issue), nil
+}
+
+func (s *GytServer) CloseIssue(ctx context.Context, req *pb.CloseIssueRequest) (*pb.IssueResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	issue, err := s.Issues.CloseIssue(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return issueToProto(issue), nil
+}
+
+func (s *GytServer) ReopenIssue(ctx context.Context, req *pb.ReopenIssueRequest) (*pb.IssueResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	issue, err := s.Issues.ReopenIssue(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return issueToProto(issue), nil
+}
+
+func (s *GytServer) AddIssueLabel(ctx context.Context, req *pb.AddIssueLabelRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.Issues.AddLabel(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetLabelName())
+}
+
+func (s *GytServer) RemoveIssueLabel(ctx context.Context, req *pb.RemoveIssueLabelRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.Issues.RemoveLabel(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetLabelName())
+}
+
+func (s *GytServer) AddIssueAssignee(ctx context.Context, req *pb.AddIssueAssigneeRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.Issues.AddAssignee(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+func (s *GytServer) RemoveIssueAssignee(ctx context.Context, req *pb.RemoveIssueAssigneeRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.Issues.RemoveAssignee(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+func (s *GytServer) CreateIssueComment(ctx context.Context, req *pb.CreateIssueCommentRequest) (*pb.IssueCommentResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	comment, err := s.Issues.CreateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return issueCommentToProto(comment), nil
+}
+
+func (s *GytServer) ListIssueComments(ctx context.Context, req *pb.ListIssueCommentsRequest) (*pb.ListIssueCommentsResponse, error) {
+	comments, err := s.Issues.ListComments(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListIssueCommentsResponse{}
+	for i := range comments {
+		resp.Comments = append(resp.Comments, issueCommentToProto(&comments[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdateIssueComment(ctx context.Context, req *pb.UpdateIssueCommentRequest) (*pb.IssueCommentResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	comment, err := s.Issues.UpdateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), uint(req.GetCommentId()), req.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return issueCommentToProto(comment), nil
+}
+
+func (s *GytServer) DeleteIssueComment(ctx context.Context, req *pb.DeleteIssueCommentRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.Issues.DeleteComment(ctx, callerID, req.GetOwner(), req.GetRepo(), uint(req.GetCommentId()))
+}
+
+// ─── Pull Requests ────────────────────────────────────────────────────────────
+
+func (s *GytServer) CreatePullRequest(ctx context.Context, req *pb.CreatePRRequest) (*pb.PullRequestResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	pr, err := s.PRs.CreatePullRequest(ctx, callerID, req.GetOwner(), req.GetRepo(), req.GetTitle(), req.GetHeadBranch(), req.GetBaseBranch(), req.Body, req.GetAssignees(), req.GetLabels())
+	if err != nil {
+		return nil, err
+	}
+	return prToProto(pr), nil
+}
+
+func (s *GytServer) GetPullRequest(ctx context.Context, req *pb.GetPRRequest) (*pb.PullRequestResponse, error) {
+	pr, err := s.PRs.GetPullRequest(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return prToProto(pr), nil
+}
+
+func (s *GytServer) ListPullRequests(ctx context.Context, req *pb.ListPRsRequest) (*pb.ListPRsResponse, error) {
+	prs, total, err := s.PRs.ListPullRequests(ctx, req.GetOwner(), req.GetRepo(), req.State, req.Author, req.Assignee, req.Label, req.Base, int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListPRsResponse{Total: int32(total), Page: req.GetPage(), PerPage: req.GetPerPage()}
+	for i := range prs {
+		resp.PullRequests = append(resp.PullRequests, prToProto(&prs[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdatePullRequest(ctx context.Context, req *pb.UpdatePRRequest) (*pb.PullRequestResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	pr, err := s.PRs.UpdatePullRequest(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.Title, req.Body, req.Base)
+	if err != nil {
+		return nil, err
+	}
+	return prToProto(pr), nil
+}
+
+func (s *GytServer) MergePullRequest(ctx context.Context, req *pb.MergePRRequest) (*pb.MergePRResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	merged, sha, msg, err := s.PRs.MergePullRequest(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.MergeMethod, req.CommitTitle, req.CommitMessage)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.MergePRResponse{Merged: merged, Sha: sha, Message: msg}, nil
+}
+
+func (s *GytServer) ClosePullRequest(ctx context.Context, req *pb.ClosePRRequest) (*pb.PullRequestResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	pr, err := s.PRs.ClosePullRequest(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return prToProto(pr), nil
+}
+
+func (s *GytServer) ReopenPullRequest(ctx context.Context, req *pb.ReopenPRRequest) (*pb.PullRequestResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	pr, err := s.PRs.ReopenPullRequest(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return prToProto(pr), nil
+}
+
+func (s *GytServer) GetPullRequestDiff(ctx context.Context, req *pb.GetPRDiffRequest) (*pb.CompareResponse, error) {
+	pr, err := s.PRs.GetPullRequest(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	callerID, _ := auth.ExtractUserID(ctx)
+	result, err := s.Repos.CompareBranches(ctx, callerID, req.GetOwner(), req.GetRepo(), pr.BaseBranch, pr.HeadBranch)
+	if err != nil {
+		return nil, err
+	}
+	return compareToProto(result), nil
+}
+
+func (s *GytServer) CreatePRComment(ctx context.Context, req *pb.CreatePRCommentRequest) (*pb.PRCommentResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	comment, err := s.PRs.CreateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetBody(), req.Path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return prCommentToProto(comment), nil
+}
+
+func (s *GytServer) ListPRComments(ctx context.Context, req *pb.ListPRCommentsRequest) (*pb.ListPRCommentsResponse, error) {
+	comments, err := s.PRs.ListComments(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListPRCommentsResponse{}
+	for i := range comments {
+		resp.Comments = append(resp.Comments, prCommentToProto(&comments[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdatePRComment(ctx context.Context, req *pb.UpdatePRCommentRequest) (*pb.PRCommentResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	comment, err := s.PRs.UpdateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), uint(req.GetCommentId()), req.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return prCommentToProto(comment), nil
+}
+
+func (s *GytServer) DeletePRComment(ctx context.Context, req *pb.DeletePRCommentRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.PRs.DeleteComment(ctx, callerID, req.GetOwner(), req.GetRepo(), uint(req.GetCommentId()))
+}
+
+func (s *GytServer) CreatePRReview(ctx context.Context, req *pb.CreatePRReviewRequest) (*pb.PRReviewResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	review, err := s.PRs.CreateReview(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetState(), req.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return prReviewToProto(review), nil
+}
+
+func (s *GytServer) ListPRReviews(ctx context.Context, req *pb.ListPRReviewsRequest) (*pb.ListPRReviewsResponse, error) {
+	reviews, err := s.PRs.ListReviews(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListPRReviewsResponse{}
+	for i := range reviews {
+		resp.Reviews = append(resp.Reviews, prReviewToProto(&reviews[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) AddPRLabel(ctx context.Context, req *pb.AddPRLabelRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.PRs.AddLabel(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetLabelName())
+}
+
+func (s *GytServer) RemovePRLabel(ctx context.Context, req *pb.RemovePRLabelRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.PRs.RemoveLabel(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetLabelName())
+}
+
+func (s *GytServer) AddPRAssignee(ctx context.Context, req *pb.AddPRAssigneeRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.PRs.AddAssignee(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+func (s *GytServer) RemovePRAssignee(ctx context.Context, req *pb.RemovePRAssigneeRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.PRs.RemoveAssignee(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+
+func (s *GytServer) CreateWebhook(ctx context.Context, req *pb.CreateWebhookRequest) (*pb.WebhookResponse, error) {
+	wh, err := s.Webhooks.CreateWebhook(ctx, req.GetOwner(), req.Repo, req.GetUrl(), req.GetEvents(), req.Secret, req.Active, req.ContentType)
+	if err != nil {
+		return nil, err
+	}
+	return webhookToProto(wh), nil
+}
+
+func (s *GytServer) GetWebhook(ctx context.Context, req *pb.GetWebhookRequest) (*pb.WebhookResponse, error) {
+	wh, err := s.Webhooks.GetWebhook(ctx, req.GetOwner(), req.Repo, uint(req.GetId()))
+	if err != nil {
+		return nil, err
+	}
+	return webhookToProto(wh), nil
+}
+
+func (s *GytServer) ListWebhooks(ctx context.Context, req *pb.ListWebhooksRequest) (*pb.ListWebhooksResponse, error) {
+	whs, err := s.Webhooks.ListWebhooks(ctx, req.GetOwner(), req.Repo)
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListWebhooksResponse{}
+	for i := range whs {
+		resp.Webhooks = append(resp.Webhooks, webhookToProto(&whs[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdateWebhook(ctx context.Context, req *pb.UpdateWebhookRequest) (*pb.WebhookResponse, error) {
+	wh, err := s.Webhooks.UpdateWebhook(ctx, req.GetOwner(), req.Repo, uint(req.GetId()), req.Url, req.GetEvents(), req.Active, req.Secret, req.ContentType)
+	if err != nil {
+		return nil, err
+	}
+	return webhookToProto(wh), nil
+}
+
+func (s *GytServer) DeleteWebhook(ctx context.Context, req *pb.DeleteWebhookRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.Webhooks.DeleteWebhook(ctx, req.GetOwner(), req.Repo, uint(req.GetId()))
+}
+
+func (s *GytServer) PingWebhook(ctx context.Context, req *pb.PingWebhookRequest) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, s.Webhooks.PingWebhook(ctx, req.GetOwner(), req.Repo, uint(req.GetId()))
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+
+func (s *GytServer) SearchRepositories(ctx context.Context, req *pb.SearchReposRequest) (*pb.ListReposResponse, error) {
+	repos, total, err := s.Search.SearchRepositories(ctx, req.GetQuery(), req.Language, req.Sort, req.Order, int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	return reposToListResponse(repos, total, req.GetPage(), req.GetPerPage(), s.Repos), nil
+}
+
+func (s *GytServer) SearchUsers(ctx context.Context, req *pb.SearchUsersRequest) (*pb.ListUsersResponse, error) {
+	users, total, err := s.Search.SearchUsers(ctx, req.GetQuery(), req.Sort, req.Order, int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListUsersResponse{Total: int32(total), Page: req.GetPage(), PerPage: req.GetPerPage()}
+	for i := range users {
+		resp.Users = append(resp.Users, userToProto(&users[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) SearchIssues(ctx context.Context, req *pb.SearchIssuesRequest) (*pb.ListIssuesResponse, error) {
+	issues, total, err := s.Search.SearchIssues(ctx, req.GetQuery(), req.State, req.Type, req.Owner, req.Repo, req.Author, req.Label, req.Sort, req.Order, int(req.GetPage()), int(req.GetPerPage()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListIssuesResponse{Total: int32(total), Page: req.GetPage(), PerPage: req.GetPerPage()}
+	for i := range issues {
+		resp.Issues = append(resp.Issues, issueToProto(&issues[i]))
+	}
+	return resp, nil
+}
+

@@ -50,6 +50,10 @@ type CheckPathResponse struct {
 	Size   *int `json:"size,omitempty"`
 }
 
+type CheckStarResponse struct {
+	Starred bool `json:"starred"`
+}
+
 type CloneURLs struct {
 	SSHURL  string `json:"sshUrl"`
 	HTTPURL string `json:"httpUrl"`
@@ -87,10 +91,55 @@ type CompareResponse struct {
 	CommitsAhead   int         `json:"commitsAhead"`
 }
 
+type CreateIssueInput struct {
+	Owner     string   `json:"owner"`
+	Repo      string   `json:"repo"`
+	Title     string   `json:"title"`
+	Body      *string  `json:"body,omitempty"`
+	Assignees []string `json:"assignees,omitempty"`
+	Labels    []string `json:"labels,omitempty"`
+}
+
+type CreateLabelInput struct {
+	Owner       string  `json:"owner"`
+	Repo        string  `json:"repo"`
+	Name        string  `json:"name"`
+	Color       string  `json:"color"`
+	Description *string `json:"description,omitempty"`
+}
+
 type CreateOrgInput struct {
 	Name        string  `json:"name"`
 	DisplayName *string `json:"displayName,omitempty"`
 	Description *string `json:"description,omitempty"`
+}
+
+type CreatePRCommentInput struct {
+	Owner  string  `json:"owner"`
+	Repo   string  `json:"repo"`
+	Number int     `json:"number"`
+	Body   string  `json:"body"`
+	Path   *string `json:"path,omitempty"`
+	Line   *int    `json:"line,omitempty"`
+}
+
+type CreatePRInput struct {
+	Owner      string   `json:"owner"`
+	Repo       string   `json:"repo"`
+	Title      string   `json:"title"`
+	HeadBranch string   `json:"headBranch"`
+	BaseBranch string   `json:"baseBranch"`
+	Body       *string  `json:"body,omitempty"`
+	Assignees  []string `json:"assignees,omitempty"`
+	Labels     []string `json:"labels,omitempty"`
+}
+
+type CreatePRReviewInput struct {
+	Owner  string `json:"owner"`
+	Repo   string `json:"repo"`
+	Number int    `json:"number"`
+	State  string `json:"state"`
+	Body   string `json:"body"`
 }
 
 type CreateRepoInput struct {
@@ -106,6 +155,16 @@ type CreateTagInput struct {
 	TagName string  `json:"tagName"`
 	Target  string  `json:"target"`
 	Message *string `json:"message,omitempty"`
+}
+
+type CreateWebhookInput struct {
+	Owner       string   `json:"owner"`
+	Repo        *string  `json:"repo,omitempty"`
+	URL         string   `json:"url"`
+	Events      []string `json:"events"`
+	Secret      *string  `json:"secret,omitempty"`
+	Active      *bool    `json:"active,omitempty"`
+	ContentType *string  `json:"contentType,omitempty"`
 }
 
 type DefaultBranchResponse struct {
@@ -131,6 +190,36 @@ type FileHistoryResponse struct {
 	Commits []*Commit `json:"commits"`
 }
 
+type Issue struct {
+	ID           string     `json:"id"`
+	Number       int        `json:"number"`
+	Title        string     `json:"title"`
+	Body         string     `json:"body"`
+	State        string     `json:"state"`
+	Author       *User      `json:"author"`
+	Assignees    []*User    `json:"assignees"`
+	Labels       []*Label   `json:"labels"`
+	CommentCount int        `json:"commentCount"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	ClosedAt     *time.Time `json:"closedAt,omitempty"`
+}
+
+type IssueComment struct {
+	ID        string    `json:"id"`
+	Body      string    `json:"body"`
+	Author    *User     `json:"author"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type Label struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Color       string `json:"color"`
+	Description string `json:"description"`
+}
+
 type ListBranchesResponse struct {
 	Branches []*Branch `json:"branches"`
 }
@@ -146,6 +235,21 @@ type ListCommitsResponse struct {
 	HasMore bool      `json:"hasMore"`
 }
 
+type ListIssueCommentsResponse struct {
+	Comments []*IssueComment `json:"comments"`
+}
+
+type ListIssuesResponse struct {
+	Issues  []*Issue `json:"issues"`
+	Total   int      `json:"total"`
+	Page    int      `json:"page"`
+	PerPage int      `json:"perPage"`
+}
+
+type ListLabelsResponse struct {
+	Labels []*Label `json:"labels"`
+}
+
 type ListOrgMembersResponse struct {
 	Members []*OrgMember `json:"members"`
 }
@@ -153,6 +257,21 @@ type ListOrgMembersResponse struct {
 type ListOrgsResponse struct {
 	Organizations []*Organization `json:"organizations"`
 	Total         int             `json:"total"`
+}
+
+type ListPRCommentsResponse struct {
+	Comments []*PRComment `json:"comments"`
+}
+
+type ListPRReviewsResponse struct {
+	Reviews []*PRReview `json:"reviews"`
+}
+
+type ListPRsResponse struct {
+	PullRequests []*PullRequest `json:"pullRequests"`
+	Total        int            `json:"total"`
+	Page         int            `json:"page"`
+	PerPage      int            `json:"perPage"`
 }
 
 type ListReposResponse struct {
@@ -166,6 +285,11 @@ type ListSSHKeysResponse struct {
 	Keys []*SSHKey `json:"keys"`
 }
 
+type ListStargazersResponse struct {
+	Users []*User `json:"users"`
+	Total int     `json:"total"`
+}
+
 type ListTagsResponse struct {
 	Tags []*Tag `json:"tags"`
 }
@@ -177,9 +301,28 @@ type ListUsersResponse struct {
 	PerPage int     `json:"perPage"`
 }
 
+type ListWebhooksResponse struct {
+	Webhooks []*Webhook `json:"webhooks"`
+}
+
 type LoginInput struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
+}
+
+type MergePRInput struct {
+	Owner         string  `json:"owner"`
+	Repo          string  `json:"repo"`
+	Number        int     `json:"number"`
+	MergeMethod   *string `json:"mergeMethod,omitempty"`
+	CommitTitle   *string `json:"commitTitle,omitempty"`
+	CommitMessage *string `json:"commitMessage,omitempty"`
+}
+
+type MergePRResponse struct {
+	Merged  bool   `json:"merged"`
+	Sha     string `json:"sha"`
+	Message string `json:"message"`
 }
 
 type Mutation struct {
@@ -201,6 +344,48 @@ type Organization struct {
 	MemberCount   int       `json:"memberCount"`
 	RepoCount     int       `json:"repoCount"`
 	CreatedAt     time.Time `json:"createdAt"`
+}
+
+type PRComment struct {
+	ID        string    `json:"id"`
+	Body      string    `json:"body"`
+	Author    *User     `json:"author"`
+	Path      *string   `json:"path,omitempty"`
+	Line      *int      `json:"line,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type PRReview struct {
+	ID          string    `json:"id"`
+	Reviewer    *User     `json:"reviewer"`
+	State       string    `json:"state"`
+	Body        string    `json:"body"`
+	SubmittedAt time.Time `json:"submittedAt"`
+}
+
+type PullRequest struct {
+	ID           string     `json:"id"`
+	Number       int        `json:"number"`
+	Title        string     `json:"title"`
+	Body         string     `json:"body"`
+	State        string     `json:"state"`
+	HeadBranch   string     `json:"headBranch"`
+	BaseBranch   string     `json:"baseBranch"`
+	HeadSha      string     `json:"headSha"`
+	Author       *User      `json:"author"`
+	Assignees    []*User    `json:"assignees"`
+	Labels       []*Label   `json:"labels"`
+	Mergeable    bool       `json:"mergeable"`
+	Merged       bool       `json:"merged"`
+	CommentCount int        `json:"commentCount"`
+	Commits      int        `json:"commits"`
+	Additions    int        `json:"additions"`
+	Deletions    int        `json:"deletions"`
+	ChangedFiles int        `json:"changedFiles"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+	MergedAt     *time.Time `json:"mergedAt,omitempty"`
 }
 
 type Query struct {
@@ -285,6 +470,23 @@ type UpdateCollaboratorInput struct {
 	AccessLevel string `json:"accessLevel"`
 }
 
+type UpdateIssueInput struct {
+	Owner  string  `json:"owner"`
+	Repo   string  `json:"repo"`
+	Number int     `json:"number"`
+	Title  *string `json:"title,omitempty"`
+	Body   *string `json:"body,omitempty"`
+}
+
+type UpdateLabelInput struct {
+	Owner       string  `json:"owner"`
+	Repo        string  `json:"repo"`
+	Name        string  `json:"name"`
+	NewName     *string `json:"newName,omitempty"`
+	Color       *string `json:"color,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
 type UpdateOrgInput struct {
 	Name        string  `json:"name"`
 	DisplayName *string `json:"displayName,omitempty"`
@@ -296,6 +498,15 @@ type UpdateOrgMemberInput struct {
 	OrgName  string `json:"orgName"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
+}
+
+type UpdatePRInput struct {
+	Owner  string  `json:"owner"`
+	Repo   string  `json:"repo"`
+	Number int     `json:"number"`
+	Title  *string `json:"title,omitempty"`
+	Body   *string `json:"body,omitempty"`
+	Base   *string `json:"base,omitempty"`
 }
 
 type UpdateRepoInput struct {
@@ -314,6 +525,17 @@ type UpdateUserInput struct {
 	Password    *string `json:"password,omitempty"`
 }
 
+type UpdateWebhookInput struct {
+	Owner       string   `json:"owner"`
+	Repo        *string  `json:"repo,omitempty"`
+	ID          string   `json:"id"`
+	URL         *string  `json:"url,omitempty"`
+	Events      []string `json:"events,omitempty"`
+	Active      *bool    `json:"active,omitempty"`
+	Secret      *string  `json:"secret,omitempty"`
+	ContentType *string  `json:"contentType,omitempty"`
+}
+
 type User struct {
 	UUID        string    `json:"uuid"`
 	Username    string    `json:"username"`
@@ -323,4 +545,14 @@ type User struct {
 	AvatarURL   string    `json:"avatarUrl"`
 	IsAdmin     bool      `json:"isAdmin"`
 	CreatedAt   time.Time `json:"createdAt"`
+}
+
+type Webhook struct {
+	ID          string    `json:"id"`
+	URL         string    `json:"url"`
+	Events      []string  `json:"events"`
+	Active      bool      `json:"active"`
+	ContentType string    `json:"contentType"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }

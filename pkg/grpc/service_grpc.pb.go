@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v6.33.4
-// source: pkg/grpc/service.proto
+// source: service.proto
 
 package grpc
 
@@ -20,57 +20,108 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GytService_Register_FullMethodName              = "/gyt.GytService/Register"
-	GytService_Login_FullMethodName                 = "/gyt.GytService/Login"
-	GytService_RefreshToken_FullMethodName          = "/gyt.GytService/RefreshToken"
-	GytService_GetUser_FullMethodName               = "/gyt.GytService/GetUser"
-	GytService_GetCurrentUser_FullMethodName        = "/gyt.GytService/GetCurrentUser"
-	GytService_UpdateUser_FullMethodName            = "/gyt.GytService/UpdateUser"
-	GytService_DeleteUser_FullMethodName            = "/gyt.GytService/DeleteUser"
-	GytService_ListUsers_FullMethodName             = "/gyt.GytService/ListUsers"
-	GytService_ListSSHKeys_FullMethodName           = "/gyt.GytService/ListSSHKeys"
-	GytService_AddSSHKey_FullMethodName             = "/gyt.GytService/AddSSHKey"
-	GytService_DeleteSSHKey_FullMethodName          = "/gyt.GytService/DeleteSSHKey"
-	GytService_CreateRepository_FullMethodName      = "/gyt.GytService/CreateRepository"
-	GytService_GetRepository_FullMethodName         = "/gyt.GytService/GetRepository"
-	GytService_ListRepositories_FullMethodName      = "/gyt.GytService/ListRepositories"
-	GytService_ListUserRepositories_FullMethodName  = "/gyt.GytService/ListUserRepositories"
-	GytService_ListOrgRepositories_FullMethodName   = "/gyt.GytService/ListOrgRepositories"
-	GytService_UpdateRepository_FullMethodName      = "/gyt.GytService/UpdateRepository"
-	GytService_DeleteRepository_FullMethodName      = "/gyt.GytService/DeleteRepository"
-	GytService_RenameRepository_FullMethodName      = "/gyt.GytService/RenameRepository"
-	GytService_GetRepositoryTree_FullMethodName     = "/gyt.GytService/GetRepositoryTree"
-	GytService_GetFileBlob_FullMethodName           = "/gyt.GytService/GetFileBlob"
-	GytService_ListBranches_FullMethodName          = "/gyt.GytService/ListBranches"
-	GytService_GetDefaultBranch_FullMethodName      = "/gyt.GytService/GetDefaultBranch"
-	GytService_SetDefaultBranch_FullMethodName      = "/gyt.GytService/SetDefaultBranch"
-	GytService_ListTags_FullMethodName              = "/gyt.GytService/ListTags"
-	GytService_CreateTag_FullMethodName             = "/gyt.GytService/CreateTag"
-	GytService_DeleteTag_FullMethodName             = "/gyt.GytService/DeleteTag"
-	GytService_ListCommits_FullMethodName           = "/gyt.GytService/ListCommits"
-	GytService_GetCommit_FullMethodName             = "/gyt.GytService/GetCommit"
-	GytService_GetRepositoryStats_FullMethodName    = "/gyt.GytService/GetRepositoryStats"
-	GytService_GetCloneURLs_FullMethodName          = "/gyt.GytService/GetCloneURLs"
-	GytService_CompareBranches_FullMethodName       = "/gyt.GytService/CompareBranches"
-	GytService_CompareCommits_FullMethodName        = "/gyt.GytService/CompareCommits"
-	GytService_GetFileHistory_FullMethodName        = "/gyt.GytService/GetFileHistory"
-	GytService_SearchCommits_FullMethodName         = "/gyt.GytService/SearchCommits"
-	GytService_CheckPath_FullMethodName             = "/gyt.GytService/CheckPath"
-	GytService_ListCollaborators_FullMethodName     = "/gyt.GytService/ListCollaborators"
-	GytService_AddCollaborator_FullMethodName       = "/gyt.GytService/AddCollaborator"
-	GytService_RemoveCollaborator_FullMethodName    = "/gyt.GytService/RemoveCollaborator"
-	GytService_UpdateCollaborator_FullMethodName    = "/gyt.GytService/UpdateCollaborator"
-	GytService_CreateOrganization_FullMethodName    = "/gyt.GytService/CreateOrganization"
-	GytService_GetOrganization_FullMethodName       = "/gyt.GytService/GetOrganization"
-	GytService_ListOrganizations_FullMethodName     = "/gyt.GytService/ListOrganizations"
-	GytService_ListUserOrganizations_FullMethodName = "/gyt.GytService/ListUserOrganizations"
-	GytService_UpdateOrganization_FullMethodName    = "/gyt.GytService/UpdateOrganization"
-	GytService_DeleteOrganization_FullMethodName    = "/gyt.GytService/DeleteOrganization"
-	GytService_ListOrgMembers_FullMethodName        = "/gyt.GytService/ListOrgMembers"
-	GytService_AddOrgMember_FullMethodName          = "/gyt.GytService/AddOrgMember"
-	GytService_UpdateOrgMember_FullMethodName       = "/gyt.GytService/UpdateOrgMember"
-	GytService_RemoveOrgMember_FullMethodName       = "/gyt.GytService/RemoveOrgMember"
-	GytService_GetOrgMembership_FullMethodName      = "/gyt.GytService/GetOrgMembership"
+	GytService_Register_FullMethodName                = "/gyt.GytService/Register"
+	GytService_Login_FullMethodName                   = "/gyt.GytService/Login"
+	GytService_RefreshToken_FullMethodName            = "/gyt.GytService/RefreshToken"
+	GytService_GetUser_FullMethodName                 = "/gyt.GytService/GetUser"
+	GytService_GetCurrentUser_FullMethodName          = "/gyt.GytService/GetCurrentUser"
+	GytService_UpdateUser_FullMethodName              = "/gyt.GytService/UpdateUser"
+	GytService_DeleteUser_FullMethodName              = "/gyt.GytService/DeleteUser"
+	GytService_ListUsers_FullMethodName               = "/gyt.GytService/ListUsers"
+	GytService_ListSSHKeys_FullMethodName             = "/gyt.GytService/ListSSHKeys"
+	GytService_AddSSHKey_FullMethodName               = "/gyt.GytService/AddSSHKey"
+	GytService_DeleteSSHKey_FullMethodName            = "/gyt.GytService/DeleteSSHKey"
+	GytService_CreateRepository_FullMethodName        = "/gyt.GytService/CreateRepository"
+	GytService_GetRepository_FullMethodName           = "/gyt.GytService/GetRepository"
+	GytService_ListRepositories_FullMethodName        = "/gyt.GytService/ListRepositories"
+	GytService_ListUserRepositories_FullMethodName    = "/gyt.GytService/ListUserRepositories"
+	GytService_ListOrgRepositories_FullMethodName     = "/gyt.GytService/ListOrgRepositories"
+	GytService_UpdateRepository_FullMethodName        = "/gyt.GytService/UpdateRepository"
+	GytService_DeleteRepository_FullMethodName        = "/gyt.GytService/DeleteRepository"
+	GytService_RenameRepository_FullMethodName        = "/gyt.GytService/RenameRepository"
+	GytService_GetRepositoryTree_FullMethodName       = "/gyt.GytService/GetRepositoryTree"
+	GytService_GetFileBlob_FullMethodName             = "/gyt.GytService/GetFileBlob"
+	GytService_ListBranches_FullMethodName            = "/gyt.GytService/ListBranches"
+	GytService_GetDefaultBranch_FullMethodName        = "/gyt.GytService/GetDefaultBranch"
+	GytService_SetDefaultBranch_FullMethodName        = "/gyt.GytService/SetDefaultBranch"
+	GytService_ListTags_FullMethodName                = "/gyt.GytService/ListTags"
+	GytService_CreateTag_FullMethodName               = "/gyt.GytService/CreateTag"
+	GytService_DeleteTag_FullMethodName               = "/gyt.GytService/DeleteTag"
+	GytService_ListCommits_FullMethodName             = "/gyt.GytService/ListCommits"
+	GytService_GetCommit_FullMethodName               = "/gyt.GytService/GetCommit"
+	GytService_GetRepositoryStats_FullMethodName      = "/gyt.GytService/GetRepositoryStats"
+	GytService_GetCloneURLs_FullMethodName            = "/gyt.GytService/GetCloneURLs"
+	GytService_CompareBranches_FullMethodName         = "/gyt.GytService/CompareBranches"
+	GytService_CompareCommits_FullMethodName          = "/gyt.GytService/CompareCommits"
+	GytService_GetFileHistory_FullMethodName          = "/gyt.GytService/GetFileHistory"
+	GytService_SearchCommits_FullMethodName           = "/gyt.GytService/SearchCommits"
+	GytService_CheckPath_FullMethodName               = "/gyt.GytService/CheckPath"
+	GytService_ListCollaborators_FullMethodName       = "/gyt.GytService/ListCollaborators"
+	GytService_AddCollaborator_FullMethodName         = "/gyt.GytService/AddCollaborator"
+	GytService_RemoveCollaborator_FullMethodName      = "/gyt.GytService/RemoveCollaborator"
+	GytService_UpdateCollaborator_FullMethodName      = "/gyt.GytService/UpdateCollaborator"
+	GytService_CreateOrganization_FullMethodName      = "/gyt.GytService/CreateOrganization"
+	GytService_GetOrganization_FullMethodName         = "/gyt.GytService/GetOrganization"
+	GytService_ListOrganizations_FullMethodName       = "/gyt.GytService/ListOrganizations"
+	GytService_ListUserOrganizations_FullMethodName   = "/gyt.GytService/ListUserOrganizations"
+	GytService_UpdateOrganization_FullMethodName      = "/gyt.GytService/UpdateOrganization"
+	GytService_DeleteOrganization_FullMethodName      = "/gyt.GytService/DeleteOrganization"
+	GytService_ListOrgMembers_FullMethodName          = "/gyt.GytService/ListOrgMembers"
+	GytService_AddOrgMember_FullMethodName            = "/gyt.GytService/AddOrgMember"
+	GytService_UpdateOrgMember_FullMethodName         = "/gyt.GytService/UpdateOrgMember"
+	GytService_RemoveOrgMember_FullMethodName         = "/gyt.GytService/RemoveOrgMember"
+	GytService_GetOrgMembership_FullMethodName        = "/gyt.GytService/GetOrgMembership"
+	GytService_StarRepository_FullMethodName          = "/gyt.GytService/StarRepository"
+	GytService_UnstarRepository_FullMethodName        = "/gyt.GytService/UnstarRepository"
+	GytService_CheckStar_FullMethodName               = "/gyt.GytService/CheckStar"
+	GytService_ListStargazers_FullMethodName          = "/gyt.GytService/ListStargazers"
+	GytService_ListStarredRepositories_FullMethodName = "/gyt.GytService/ListStarredRepositories"
+	GytService_CreateLabel_FullMethodName             = "/gyt.GytService/CreateLabel"
+	GytService_GetLabel_FullMethodName                = "/gyt.GytService/GetLabel"
+	GytService_ListLabels_FullMethodName              = "/gyt.GytService/ListLabels"
+	GytService_UpdateLabel_FullMethodName             = "/gyt.GytService/UpdateLabel"
+	GytService_DeleteLabel_FullMethodName             = "/gyt.GytService/DeleteLabel"
+	GytService_CreateIssue_FullMethodName             = "/gyt.GytService/CreateIssue"
+	GytService_GetIssue_FullMethodName                = "/gyt.GytService/GetIssue"
+	GytService_ListIssues_FullMethodName              = "/gyt.GytService/ListIssues"
+	GytService_UpdateIssue_FullMethodName             = "/gyt.GytService/UpdateIssue"
+	GytService_CloseIssue_FullMethodName              = "/gyt.GytService/CloseIssue"
+	GytService_ReopenIssue_FullMethodName             = "/gyt.GytService/ReopenIssue"
+	GytService_AddIssueLabel_FullMethodName           = "/gyt.GytService/AddIssueLabel"
+	GytService_RemoveIssueLabel_FullMethodName        = "/gyt.GytService/RemoveIssueLabel"
+	GytService_AddIssueAssignee_FullMethodName        = "/gyt.GytService/AddIssueAssignee"
+	GytService_RemoveIssueAssignee_FullMethodName     = "/gyt.GytService/RemoveIssueAssignee"
+	GytService_CreateIssueComment_FullMethodName      = "/gyt.GytService/CreateIssueComment"
+	GytService_ListIssueComments_FullMethodName       = "/gyt.GytService/ListIssueComments"
+	GytService_UpdateIssueComment_FullMethodName      = "/gyt.GytService/UpdateIssueComment"
+	GytService_DeleteIssueComment_FullMethodName      = "/gyt.GytService/DeleteIssueComment"
+	GytService_CreatePullRequest_FullMethodName       = "/gyt.GytService/CreatePullRequest"
+	GytService_GetPullRequest_FullMethodName          = "/gyt.GytService/GetPullRequest"
+	GytService_ListPullRequests_FullMethodName        = "/gyt.GytService/ListPullRequests"
+	GytService_UpdatePullRequest_FullMethodName       = "/gyt.GytService/UpdatePullRequest"
+	GytService_MergePullRequest_FullMethodName        = "/gyt.GytService/MergePullRequest"
+	GytService_ClosePullRequest_FullMethodName        = "/gyt.GytService/ClosePullRequest"
+	GytService_ReopenPullRequest_FullMethodName       = "/gyt.GytService/ReopenPullRequest"
+	GytService_GetPullRequestDiff_FullMethodName      = "/gyt.GytService/GetPullRequestDiff"
+	GytService_CreatePRComment_FullMethodName         = "/gyt.GytService/CreatePRComment"
+	GytService_ListPRComments_FullMethodName          = "/gyt.GytService/ListPRComments"
+	GytService_UpdatePRComment_FullMethodName         = "/gyt.GytService/UpdatePRComment"
+	GytService_DeletePRComment_FullMethodName         = "/gyt.GytService/DeletePRComment"
+	GytService_CreatePRReview_FullMethodName          = "/gyt.GytService/CreatePRReview"
+	GytService_ListPRReviews_FullMethodName           = "/gyt.GytService/ListPRReviews"
+	GytService_AddPRLabel_FullMethodName              = "/gyt.GytService/AddPRLabel"
+	GytService_RemovePRLabel_FullMethodName           = "/gyt.GytService/RemovePRLabel"
+	GytService_AddPRAssignee_FullMethodName           = "/gyt.GytService/AddPRAssignee"
+	GytService_RemovePRAssignee_FullMethodName        = "/gyt.GytService/RemovePRAssignee"
+	GytService_CreateWebhook_FullMethodName           = "/gyt.GytService/CreateWebhook"
+	GytService_GetWebhook_FullMethodName              = "/gyt.GytService/GetWebhook"
+	GytService_ListWebhooks_FullMethodName            = "/gyt.GytService/ListWebhooks"
+	GytService_UpdateWebhook_FullMethodName           = "/gyt.GytService/UpdateWebhook"
+	GytService_DeleteWebhook_FullMethodName           = "/gyt.GytService/DeleteWebhook"
+	GytService_PingWebhook_FullMethodName             = "/gyt.GytService/PingWebhook"
+	GytService_SearchRepositories_FullMethodName      = "/gyt.GytService/SearchRepositories"
+	GytService_SearchUsers_FullMethodName             = "/gyt.GytService/SearchUsers"
+	GytService_SearchIssues_FullMethodName            = "/gyt.GytService/SearchIssues"
 )
 
 // GytServiceClient is the client API for GytService service.
@@ -138,6 +189,63 @@ type GytServiceClient interface {
 	UpdateOrgMember(ctx context.Context, in *UpdateOrgMemberRequest, opts ...grpc.CallOption) (*OrgMemberResponse, error)
 	RemoveOrgMember(ctx context.Context, in *RemoveOrgMemberRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOrgMembership(ctx context.Context, in *GetOrgMembershipRequest, opts ...grpc.CallOption) (*OrgMemberResponse, error)
+	// ─── Stars ───────────────────────────────────────────────────────────────
+	StarRepository(ctx context.Context, in *StarRepoRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UnstarRepository(ctx context.Context, in *UnstarRepoRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CheckStar(ctx context.Context, in *CheckStarRequest, opts ...grpc.CallOption) (*CheckStarResponse, error)
+	ListStargazers(ctx context.Context, in *ListStargazersRequest, opts ...grpc.CallOption) (*ListStargazersResponse, error)
+	ListStarredRepositories(ctx context.Context, in *ListStarredReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error)
+	// ─── Labels ──────────────────────────────────────────────────────────────
+	CreateLabel(ctx context.Context, in *CreateLabelRequest, opts ...grpc.CallOption) (*LabelResponse, error)
+	GetLabel(ctx context.Context, in *GetLabelRequest, opts ...grpc.CallOption) (*LabelResponse, error)
+	ListLabels(ctx context.Context, in *ListLabelsRequest, opts ...grpc.CallOption) (*ListLabelsResponse, error)
+	UpdateLabel(ctx context.Context, in *UpdateLabelRequest, opts ...grpc.CallOption) (*LabelResponse, error)
+	DeleteLabel(ctx context.Context, in *DeleteLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// ─── Issues ──────────────────────────────────────────────────────────────
+	CreateIssue(ctx context.Context, in *CreateIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error)
+	GetIssue(ctx context.Context, in *GetIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error)
+	ListIssues(ctx context.Context, in *ListIssuesRequest, opts ...grpc.CallOption) (*ListIssuesResponse, error)
+	UpdateIssue(ctx context.Context, in *UpdateIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error)
+	CloseIssue(ctx context.Context, in *CloseIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error)
+	ReopenIssue(ctx context.Context, in *ReopenIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error)
+	AddIssueLabel(ctx context.Context, in *AddIssueLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RemoveIssueLabel(ctx context.Context, in *RemoveIssueLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AddIssueAssignee(ctx context.Context, in *AddIssueAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RemoveIssueAssignee(ctx context.Context, in *RemoveIssueAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateIssueComment(ctx context.Context, in *CreateIssueCommentRequest, opts ...grpc.CallOption) (*IssueCommentResponse, error)
+	ListIssueComments(ctx context.Context, in *ListIssueCommentsRequest, opts ...grpc.CallOption) (*ListIssueCommentsResponse, error)
+	UpdateIssueComment(ctx context.Context, in *UpdateIssueCommentRequest, opts ...grpc.CallOption) (*IssueCommentResponse, error)
+	DeleteIssueComment(ctx context.Context, in *DeleteIssueCommentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// ─── Pull Requests ───────────────────────────────────────────────────────
+	CreatePullRequest(ctx context.Context, in *CreatePRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error)
+	GetPullRequest(ctx context.Context, in *GetPRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error)
+	ListPullRequests(ctx context.Context, in *ListPRsRequest, opts ...grpc.CallOption) (*ListPRsResponse, error)
+	UpdatePullRequest(ctx context.Context, in *UpdatePRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error)
+	MergePullRequest(ctx context.Context, in *MergePRRequest, opts ...grpc.CallOption) (*MergePRResponse, error)
+	ClosePullRequest(ctx context.Context, in *ClosePRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error)
+	ReopenPullRequest(ctx context.Context, in *ReopenPRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error)
+	GetPullRequestDiff(ctx context.Context, in *GetPRDiffRequest, opts ...grpc.CallOption) (*CompareResponse, error)
+	CreatePRComment(ctx context.Context, in *CreatePRCommentRequest, opts ...grpc.CallOption) (*PRCommentResponse, error)
+	ListPRComments(ctx context.Context, in *ListPRCommentsRequest, opts ...grpc.CallOption) (*ListPRCommentsResponse, error)
+	UpdatePRComment(ctx context.Context, in *UpdatePRCommentRequest, opts ...grpc.CallOption) (*PRCommentResponse, error)
+	DeletePRComment(ctx context.Context, in *DeletePRCommentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreatePRReview(ctx context.Context, in *CreatePRReviewRequest, opts ...grpc.CallOption) (*PRReviewResponse, error)
+	ListPRReviews(ctx context.Context, in *ListPRReviewsRequest, opts ...grpc.CallOption) (*ListPRReviewsResponse, error)
+	AddPRLabel(ctx context.Context, in *AddPRLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RemovePRLabel(ctx context.Context, in *RemovePRLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AddPRAssignee(ctx context.Context, in *AddPRAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RemovePRAssignee(ctx context.Context, in *RemovePRAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// ─── Webhooks ────────────────────────────────────────────────────────────
+	CreateWebhook(ctx context.Context, in *CreateWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error)
+	GetWebhook(ctx context.Context, in *GetWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error)
+	ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error)
+	UpdateWebhook(ctx context.Context, in *UpdateWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error)
+	DeleteWebhook(ctx context.Context, in *DeleteWebhookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	PingWebhook(ctx context.Context, in *PingWebhookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// ─── Search ──────────────────────────────────────────────────────────────
+	SearchRepositories(ctx context.Context, in *SearchReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error)
+	SearchUsers(ctx context.Context, in *SearchUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*ListIssuesResponse, error)
 }
 
 type gytServiceClient struct {
@@ -658,6 +766,516 @@ func (c *gytServiceClient) GetOrgMembership(ctx context.Context, in *GetOrgMembe
 	return out, nil
 }
 
+func (c *gytServiceClient) StarRepository(ctx context.Context, in *StarRepoRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_StarRepository_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UnstarRepository(ctx context.Context, in *UnstarRepoRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_UnstarRepository_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CheckStar(ctx context.Context, in *CheckStarRequest, opts ...grpc.CallOption) (*CheckStarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckStarResponse)
+	err := c.cc.Invoke(ctx, GytService_CheckStar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListStargazers(ctx context.Context, in *ListStargazersRequest, opts ...grpc.CallOption) (*ListStargazersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListStargazersResponse)
+	err := c.cc.Invoke(ctx, GytService_ListStargazers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListStarredRepositories(ctx context.Context, in *ListStarredReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListReposResponse)
+	err := c.cc.Invoke(ctx, GytService_ListStarredRepositories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreateLabel(ctx context.Context, in *CreateLabelRequest, opts ...grpc.CallOption) (*LabelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LabelResponse)
+	err := c.cc.Invoke(ctx, GytService_CreateLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) GetLabel(ctx context.Context, in *GetLabelRequest, opts ...grpc.CallOption) (*LabelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LabelResponse)
+	err := c.cc.Invoke(ctx, GytService_GetLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListLabels(ctx context.Context, in *ListLabelsRequest, opts ...grpc.CallOption) (*ListLabelsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListLabelsResponse)
+	err := c.cc.Invoke(ctx, GytService_ListLabels_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdateLabel(ctx context.Context, in *UpdateLabelRequest, opts ...grpc.CallOption) (*LabelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LabelResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdateLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) DeleteLabel(ctx context.Context, in *DeleteLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_DeleteLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreateIssue(ctx context.Context, in *CreateIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueResponse)
+	err := c.cc.Invoke(ctx, GytService_CreateIssue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) GetIssue(ctx context.Context, in *GetIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueResponse)
+	err := c.cc.Invoke(ctx, GytService_GetIssue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListIssues(ctx context.Context, in *ListIssuesRequest, opts ...grpc.CallOption) (*ListIssuesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListIssuesResponse)
+	err := c.cc.Invoke(ctx, GytService_ListIssues_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdateIssue(ctx context.Context, in *UpdateIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdateIssue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CloseIssue(ctx context.Context, in *CloseIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueResponse)
+	err := c.cc.Invoke(ctx, GytService_CloseIssue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ReopenIssue(ctx context.Context, in *ReopenIssueRequest, opts ...grpc.CallOption) (*IssueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueResponse)
+	err := c.cc.Invoke(ctx, GytService_ReopenIssue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) AddIssueLabel(ctx context.Context, in *AddIssueLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_AddIssueLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) RemoveIssueLabel(ctx context.Context, in *RemoveIssueLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_RemoveIssueLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) AddIssueAssignee(ctx context.Context, in *AddIssueAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_AddIssueAssignee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) RemoveIssueAssignee(ctx context.Context, in *RemoveIssueAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_RemoveIssueAssignee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreateIssueComment(ctx context.Context, in *CreateIssueCommentRequest, opts ...grpc.CallOption) (*IssueCommentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueCommentResponse)
+	err := c.cc.Invoke(ctx, GytService_CreateIssueComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListIssueComments(ctx context.Context, in *ListIssueCommentsRequest, opts ...grpc.CallOption) (*ListIssueCommentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListIssueCommentsResponse)
+	err := c.cc.Invoke(ctx, GytService_ListIssueComments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdateIssueComment(ctx context.Context, in *UpdateIssueCommentRequest, opts ...grpc.CallOption) (*IssueCommentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueCommentResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdateIssueComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) DeleteIssueComment(ctx context.Context, in *DeleteIssueCommentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_DeleteIssueComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreatePullRequest(ctx context.Context, in *CreatePRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PullRequestResponse)
+	err := c.cc.Invoke(ctx, GytService_CreatePullRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) GetPullRequest(ctx context.Context, in *GetPRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PullRequestResponse)
+	err := c.cc.Invoke(ctx, GytService_GetPullRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListPullRequests(ctx context.Context, in *ListPRsRequest, opts ...grpc.CallOption) (*ListPRsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPRsResponse)
+	err := c.cc.Invoke(ctx, GytService_ListPullRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdatePullRequest(ctx context.Context, in *UpdatePRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PullRequestResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdatePullRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) MergePullRequest(ctx context.Context, in *MergePRRequest, opts ...grpc.CallOption) (*MergePRResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MergePRResponse)
+	err := c.cc.Invoke(ctx, GytService_MergePullRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ClosePullRequest(ctx context.Context, in *ClosePRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PullRequestResponse)
+	err := c.cc.Invoke(ctx, GytService_ClosePullRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ReopenPullRequest(ctx context.Context, in *ReopenPRRequest, opts ...grpc.CallOption) (*PullRequestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PullRequestResponse)
+	err := c.cc.Invoke(ctx, GytService_ReopenPullRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) GetPullRequestDiff(ctx context.Context, in *GetPRDiffRequest, opts ...grpc.CallOption) (*CompareResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompareResponse)
+	err := c.cc.Invoke(ctx, GytService_GetPullRequestDiff_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreatePRComment(ctx context.Context, in *CreatePRCommentRequest, opts ...grpc.CallOption) (*PRCommentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PRCommentResponse)
+	err := c.cc.Invoke(ctx, GytService_CreatePRComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListPRComments(ctx context.Context, in *ListPRCommentsRequest, opts ...grpc.CallOption) (*ListPRCommentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPRCommentsResponse)
+	err := c.cc.Invoke(ctx, GytService_ListPRComments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdatePRComment(ctx context.Context, in *UpdatePRCommentRequest, opts ...grpc.CallOption) (*PRCommentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PRCommentResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdatePRComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) DeletePRComment(ctx context.Context, in *DeletePRCommentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_DeletePRComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreatePRReview(ctx context.Context, in *CreatePRReviewRequest, opts ...grpc.CallOption) (*PRReviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PRReviewResponse)
+	err := c.cc.Invoke(ctx, GytService_CreatePRReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListPRReviews(ctx context.Context, in *ListPRReviewsRequest, opts ...grpc.CallOption) (*ListPRReviewsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPRReviewsResponse)
+	err := c.cc.Invoke(ctx, GytService_ListPRReviews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) AddPRLabel(ctx context.Context, in *AddPRLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_AddPRLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) RemovePRLabel(ctx context.Context, in *RemovePRLabelRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_RemovePRLabel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) AddPRAssignee(ctx context.Context, in *AddPRAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_AddPRAssignee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) RemovePRAssignee(ctx context.Context, in *RemovePRAssigneeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_RemovePRAssignee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreateWebhook(ctx context.Context, in *CreateWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WebhookResponse)
+	err := c.cc.Invoke(ctx, GytService_CreateWebhook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) GetWebhook(ctx context.Context, in *GetWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WebhookResponse)
+	err := c.cc.Invoke(ctx, GytService_GetWebhook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListWebhooks(ctx context.Context, in *ListWebhooksRequest, opts ...grpc.CallOption) (*ListWebhooksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListWebhooksResponse)
+	err := c.cc.Invoke(ctx, GytService_ListWebhooks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdateWebhook(ctx context.Context, in *UpdateWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WebhookResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdateWebhook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) DeleteWebhook(ctx context.Context, in *DeleteWebhookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_DeleteWebhook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) PingWebhook(ctx context.Context, in *PingWebhookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, GytService_PingWebhook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) SearchRepositories(ctx context.Context, in *SearchReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListReposResponse)
+	err := c.cc.Invoke(ctx, GytService_SearchRepositories_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) SearchUsers(ctx context.Context, in *SearchUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsersResponse)
+	err := c.cc.Invoke(ctx, GytService_SearchUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*ListIssuesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListIssuesResponse)
+	err := c.cc.Invoke(ctx, GytService_SearchIssues_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GytServiceServer is the server API for GytService service.
 // All implementations must embed UnimplementedGytServiceServer
 // for forward compatibility.
@@ -723,6 +1341,63 @@ type GytServiceServer interface {
 	UpdateOrgMember(context.Context, *UpdateOrgMemberRequest) (*OrgMemberResponse, error)
 	RemoveOrgMember(context.Context, *RemoveOrgMemberRequest) (*emptypb.Empty, error)
 	GetOrgMembership(context.Context, *GetOrgMembershipRequest) (*OrgMemberResponse, error)
+	// ─── Stars ───────────────────────────────────────────────────────────────
+	StarRepository(context.Context, *StarRepoRequest) (*emptypb.Empty, error)
+	UnstarRepository(context.Context, *UnstarRepoRequest) (*emptypb.Empty, error)
+	CheckStar(context.Context, *CheckStarRequest) (*CheckStarResponse, error)
+	ListStargazers(context.Context, *ListStargazersRequest) (*ListStargazersResponse, error)
+	ListStarredRepositories(context.Context, *ListStarredReposRequest) (*ListReposResponse, error)
+	// ─── Labels ──────────────────────────────────────────────────────────────
+	CreateLabel(context.Context, *CreateLabelRequest) (*LabelResponse, error)
+	GetLabel(context.Context, *GetLabelRequest) (*LabelResponse, error)
+	ListLabels(context.Context, *ListLabelsRequest) (*ListLabelsResponse, error)
+	UpdateLabel(context.Context, *UpdateLabelRequest) (*LabelResponse, error)
+	DeleteLabel(context.Context, *DeleteLabelRequest) (*emptypb.Empty, error)
+	// ─── Issues ──────────────────────────────────────────────────────────────
+	CreateIssue(context.Context, *CreateIssueRequest) (*IssueResponse, error)
+	GetIssue(context.Context, *GetIssueRequest) (*IssueResponse, error)
+	ListIssues(context.Context, *ListIssuesRequest) (*ListIssuesResponse, error)
+	UpdateIssue(context.Context, *UpdateIssueRequest) (*IssueResponse, error)
+	CloseIssue(context.Context, *CloseIssueRequest) (*IssueResponse, error)
+	ReopenIssue(context.Context, *ReopenIssueRequest) (*IssueResponse, error)
+	AddIssueLabel(context.Context, *AddIssueLabelRequest) (*emptypb.Empty, error)
+	RemoveIssueLabel(context.Context, *RemoveIssueLabelRequest) (*emptypb.Empty, error)
+	AddIssueAssignee(context.Context, *AddIssueAssigneeRequest) (*emptypb.Empty, error)
+	RemoveIssueAssignee(context.Context, *RemoveIssueAssigneeRequest) (*emptypb.Empty, error)
+	CreateIssueComment(context.Context, *CreateIssueCommentRequest) (*IssueCommentResponse, error)
+	ListIssueComments(context.Context, *ListIssueCommentsRequest) (*ListIssueCommentsResponse, error)
+	UpdateIssueComment(context.Context, *UpdateIssueCommentRequest) (*IssueCommentResponse, error)
+	DeleteIssueComment(context.Context, *DeleteIssueCommentRequest) (*emptypb.Empty, error)
+	// ─── Pull Requests ───────────────────────────────────────────────────────
+	CreatePullRequest(context.Context, *CreatePRRequest) (*PullRequestResponse, error)
+	GetPullRequest(context.Context, *GetPRRequest) (*PullRequestResponse, error)
+	ListPullRequests(context.Context, *ListPRsRequest) (*ListPRsResponse, error)
+	UpdatePullRequest(context.Context, *UpdatePRRequest) (*PullRequestResponse, error)
+	MergePullRequest(context.Context, *MergePRRequest) (*MergePRResponse, error)
+	ClosePullRequest(context.Context, *ClosePRRequest) (*PullRequestResponse, error)
+	ReopenPullRequest(context.Context, *ReopenPRRequest) (*PullRequestResponse, error)
+	GetPullRequestDiff(context.Context, *GetPRDiffRequest) (*CompareResponse, error)
+	CreatePRComment(context.Context, *CreatePRCommentRequest) (*PRCommentResponse, error)
+	ListPRComments(context.Context, *ListPRCommentsRequest) (*ListPRCommentsResponse, error)
+	UpdatePRComment(context.Context, *UpdatePRCommentRequest) (*PRCommentResponse, error)
+	DeletePRComment(context.Context, *DeletePRCommentRequest) (*emptypb.Empty, error)
+	CreatePRReview(context.Context, *CreatePRReviewRequest) (*PRReviewResponse, error)
+	ListPRReviews(context.Context, *ListPRReviewsRequest) (*ListPRReviewsResponse, error)
+	AddPRLabel(context.Context, *AddPRLabelRequest) (*emptypb.Empty, error)
+	RemovePRLabel(context.Context, *RemovePRLabelRequest) (*emptypb.Empty, error)
+	AddPRAssignee(context.Context, *AddPRAssigneeRequest) (*emptypb.Empty, error)
+	RemovePRAssignee(context.Context, *RemovePRAssigneeRequest) (*emptypb.Empty, error)
+	// ─── Webhooks ────────────────────────────────────────────────────────────
+	CreateWebhook(context.Context, *CreateWebhookRequest) (*WebhookResponse, error)
+	GetWebhook(context.Context, *GetWebhookRequest) (*WebhookResponse, error)
+	ListWebhooks(context.Context, *ListWebhooksRequest) (*ListWebhooksResponse, error)
+	UpdateWebhook(context.Context, *UpdateWebhookRequest) (*WebhookResponse, error)
+	DeleteWebhook(context.Context, *DeleteWebhookRequest) (*emptypb.Empty, error)
+	PingWebhook(context.Context, *PingWebhookRequest) (*emptypb.Empty, error)
+	// ─── Search ──────────────────────────────────────────────────────────────
+	SearchRepositories(context.Context, *SearchReposRequest) (*ListReposResponse, error)
+	SearchUsers(context.Context, *SearchUsersRequest) (*ListUsersResponse, error)
+	SearchIssues(context.Context, *SearchIssuesRequest) (*ListIssuesResponse, error)
 	mustEmbedUnimplementedGytServiceServer()
 }
 
@@ -885,6 +1560,159 @@ func (UnimplementedGytServiceServer) RemoveOrgMember(context.Context, *RemoveOrg
 }
 func (UnimplementedGytServiceServer) GetOrgMembership(context.Context, *GetOrgMembershipRequest) (*OrgMemberResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrgMembership not implemented")
+}
+func (UnimplementedGytServiceServer) StarRepository(context.Context, *StarRepoRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method StarRepository not implemented")
+}
+func (UnimplementedGytServiceServer) UnstarRepository(context.Context, *UnstarRepoRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnstarRepository not implemented")
+}
+func (UnimplementedGytServiceServer) CheckStar(context.Context, *CheckStarRequest) (*CheckStarResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckStar not implemented")
+}
+func (UnimplementedGytServiceServer) ListStargazers(context.Context, *ListStargazersRequest) (*ListStargazersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListStargazers not implemented")
+}
+func (UnimplementedGytServiceServer) ListStarredRepositories(context.Context, *ListStarredReposRequest) (*ListReposResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListStarredRepositories not implemented")
+}
+func (UnimplementedGytServiceServer) CreateLabel(context.Context, *CreateLabelRequest) (*LabelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateLabel not implemented")
+}
+func (UnimplementedGytServiceServer) GetLabel(context.Context, *GetLabelRequest) (*LabelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLabel not implemented")
+}
+func (UnimplementedGytServiceServer) ListLabels(context.Context, *ListLabelsRequest) (*ListLabelsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLabels not implemented")
+}
+func (UnimplementedGytServiceServer) UpdateLabel(context.Context, *UpdateLabelRequest) (*LabelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateLabel not implemented")
+}
+func (UnimplementedGytServiceServer) DeleteLabel(context.Context, *DeleteLabelRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteLabel not implemented")
+}
+func (UnimplementedGytServiceServer) CreateIssue(context.Context, *CreateIssueRequest) (*IssueResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateIssue not implemented")
+}
+func (UnimplementedGytServiceServer) GetIssue(context.Context, *GetIssueRequest) (*IssueResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetIssue not implemented")
+}
+func (UnimplementedGytServiceServer) ListIssues(context.Context, *ListIssuesRequest) (*ListIssuesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListIssues not implemented")
+}
+func (UnimplementedGytServiceServer) UpdateIssue(context.Context, *UpdateIssueRequest) (*IssueResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateIssue not implemented")
+}
+func (UnimplementedGytServiceServer) CloseIssue(context.Context, *CloseIssueRequest) (*IssueResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CloseIssue not implemented")
+}
+func (UnimplementedGytServiceServer) ReopenIssue(context.Context, *ReopenIssueRequest) (*IssueResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReopenIssue not implemented")
+}
+func (UnimplementedGytServiceServer) AddIssueLabel(context.Context, *AddIssueLabelRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddIssueLabel not implemented")
+}
+func (UnimplementedGytServiceServer) RemoveIssueLabel(context.Context, *RemoveIssueLabelRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveIssueLabel not implemented")
+}
+func (UnimplementedGytServiceServer) AddIssueAssignee(context.Context, *AddIssueAssigneeRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddIssueAssignee not implemented")
+}
+func (UnimplementedGytServiceServer) RemoveIssueAssignee(context.Context, *RemoveIssueAssigneeRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveIssueAssignee not implemented")
+}
+func (UnimplementedGytServiceServer) CreateIssueComment(context.Context, *CreateIssueCommentRequest) (*IssueCommentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateIssueComment not implemented")
+}
+func (UnimplementedGytServiceServer) ListIssueComments(context.Context, *ListIssueCommentsRequest) (*ListIssueCommentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListIssueComments not implemented")
+}
+func (UnimplementedGytServiceServer) UpdateIssueComment(context.Context, *UpdateIssueCommentRequest) (*IssueCommentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateIssueComment not implemented")
+}
+func (UnimplementedGytServiceServer) DeleteIssueComment(context.Context, *DeleteIssueCommentRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteIssueComment not implemented")
+}
+func (UnimplementedGytServiceServer) CreatePullRequest(context.Context, *CreatePRRequest) (*PullRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreatePullRequest not implemented")
+}
+func (UnimplementedGytServiceServer) GetPullRequest(context.Context, *GetPRRequest) (*PullRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPullRequest not implemented")
+}
+func (UnimplementedGytServiceServer) ListPullRequests(context.Context, *ListPRsRequest) (*ListPRsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPullRequests not implemented")
+}
+func (UnimplementedGytServiceServer) UpdatePullRequest(context.Context, *UpdatePRRequest) (*PullRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdatePullRequest not implemented")
+}
+func (UnimplementedGytServiceServer) MergePullRequest(context.Context, *MergePRRequest) (*MergePRResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MergePullRequest not implemented")
+}
+func (UnimplementedGytServiceServer) ClosePullRequest(context.Context, *ClosePRRequest) (*PullRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClosePullRequest not implemented")
+}
+func (UnimplementedGytServiceServer) ReopenPullRequest(context.Context, *ReopenPRRequest) (*PullRequestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReopenPullRequest not implemented")
+}
+func (UnimplementedGytServiceServer) GetPullRequestDiff(context.Context, *GetPRDiffRequest) (*CompareResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPullRequestDiff not implemented")
+}
+func (UnimplementedGytServiceServer) CreatePRComment(context.Context, *CreatePRCommentRequest) (*PRCommentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreatePRComment not implemented")
+}
+func (UnimplementedGytServiceServer) ListPRComments(context.Context, *ListPRCommentsRequest) (*ListPRCommentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPRComments not implemented")
+}
+func (UnimplementedGytServiceServer) UpdatePRComment(context.Context, *UpdatePRCommentRequest) (*PRCommentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdatePRComment not implemented")
+}
+func (UnimplementedGytServiceServer) DeletePRComment(context.Context, *DeletePRCommentRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeletePRComment not implemented")
+}
+func (UnimplementedGytServiceServer) CreatePRReview(context.Context, *CreatePRReviewRequest) (*PRReviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreatePRReview not implemented")
+}
+func (UnimplementedGytServiceServer) ListPRReviews(context.Context, *ListPRReviewsRequest) (*ListPRReviewsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPRReviews not implemented")
+}
+func (UnimplementedGytServiceServer) AddPRLabel(context.Context, *AddPRLabelRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddPRLabel not implemented")
+}
+func (UnimplementedGytServiceServer) RemovePRLabel(context.Context, *RemovePRLabelRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemovePRLabel not implemented")
+}
+func (UnimplementedGytServiceServer) AddPRAssignee(context.Context, *AddPRAssigneeRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddPRAssignee not implemented")
+}
+func (UnimplementedGytServiceServer) RemovePRAssignee(context.Context, *RemovePRAssigneeRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemovePRAssignee not implemented")
+}
+func (UnimplementedGytServiceServer) CreateWebhook(context.Context, *CreateWebhookRequest) (*WebhookResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateWebhook not implemented")
+}
+func (UnimplementedGytServiceServer) GetWebhook(context.Context, *GetWebhookRequest) (*WebhookResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWebhook not implemented")
+}
+func (UnimplementedGytServiceServer) ListWebhooks(context.Context, *ListWebhooksRequest) (*ListWebhooksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListWebhooks not implemented")
+}
+func (UnimplementedGytServiceServer) UpdateWebhook(context.Context, *UpdateWebhookRequest) (*WebhookResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateWebhook not implemented")
+}
+func (UnimplementedGytServiceServer) DeleteWebhook(context.Context, *DeleteWebhookRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteWebhook not implemented")
+}
+func (UnimplementedGytServiceServer) PingWebhook(context.Context, *PingWebhookRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method PingWebhook not implemented")
+}
+func (UnimplementedGytServiceServer) SearchRepositories(context.Context, *SearchReposRequest) (*ListReposResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchRepositories not implemented")
+}
+func (UnimplementedGytServiceServer) SearchUsers(context.Context, *SearchUsersRequest) (*ListUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchUsers not implemented")
+}
+func (UnimplementedGytServiceServer) SearchIssues(context.Context, *SearchIssuesRequest) (*ListIssuesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SearchIssues not implemented")
 }
 func (UnimplementedGytServiceServer) mustEmbedUnimplementedGytServiceServer() {}
 func (UnimplementedGytServiceServer) testEmbeddedByValue()                    {}
@@ -1825,6 +2653,924 @@ func _GytService_GetOrgMembership_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GytService_StarRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StarRepoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).StarRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_StarRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).StarRepository(ctx, req.(*StarRepoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UnstarRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnstarRepoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UnstarRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UnstarRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UnstarRepository(ctx, req.(*UnstarRepoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CheckStar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckStarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CheckStar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CheckStar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CheckStar(ctx, req.(*CheckStarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListStargazers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStargazersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListStargazers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListStargazers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListStargazers(ctx, req.(*ListStargazersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListStarredRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListStarredReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListStarredRepositories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListStarredRepositories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListStarredRepositories(ctx, req.(*ListStarredReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreateLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreateLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreateLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreateLabel(ctx, req.(*CreateLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_GetLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetLabel(ctx, req.(*GetLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListLabels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListLabelsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListLabels(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListLabels_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListLabels(ctx, req.(*ListLabelsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdateLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdateLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdateLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdateLabel(ctx, req.(*UpdateLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_DeleteLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DeleteLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DeleteLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DeleteLabel(ctx, req.(*DeleteLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreateIssue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateIssueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreateIssue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreateIssue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreateIssue(ctx, req.(*CreateIssueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_GetIssue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetIssueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetIssue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetIssue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetIssue(ctx, req.(*GetIssueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListIssues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListIssuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListIssues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListIssues_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListIssues(ctx, req.(*ListIssuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdateIssue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateIssueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdateIssue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdateIssue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdateIssue(ctx, req.(*UpdateIssueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CloseIssue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CloseIssueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CloseIssue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CloseIssue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CloseIssue(ctx, req.(*CloseIssueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ReopenIssue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReopenIssueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ReopenIssue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ReopenIssue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ReopenIssue(ctx, req.(*ReopenIssueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_AddIssueLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddIssueLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).AddIssueLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_AddIssueLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).AddIssueLabel(ctx, req.(*AddIssueLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_RemoveIssueLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveIssueLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).RemoveIssueLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_RemoveIssueLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).RemoveIssueLabel(ctx, req.(*RemoveIssueLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_AddIssueAssignee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddIssueAssigneeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).AddIssueAssignee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_AddIssueAssignee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).AddIssueAssignee(ctx, req.(*AddIssueAssigneeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_RemoveIssueAssignee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveIssueAssigneeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).RemoveIssueAssignee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_RemoveIssueAssignee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).RemoveIssueAssignee(ctx, req.(*RemoveIssueAssigneeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreateIssueComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateIssueCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreateIssueComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreateIssueComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreateIssueComment(ctx, req.(*CreateIssueCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListIssueComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListIssueCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListIssueComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListIssueComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListIssueComments(ctx, req.(*ListIssueCommentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdateIssueComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateIssueCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdateIssueComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdateIssueComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdateIssueComment(ctx, req.(*UpdateIssueCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_DeleteIssueComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteIssueCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DeleteIssueComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DeleteIssueComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DeleteIssueComment(ctx, req.(*DeleteIssueCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreatePullRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreatePullRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreatePullRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreatePullRequest(ctx, req.(*CreatePRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_GetPullRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetPullRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetPullRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetPullRequest(ctx, req.(*GetPRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListPullRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPRsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListPullRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListPullRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListPullRequests(ctx, req.(*ListPRsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdatePullRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdatePullRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdatePullRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdatePullRequest(ctx, req.(*UpdatePRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_MergePullRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MergePRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).MergePullRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_MergePullRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).MergePullRequest(ctx, req.(*MergePRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ClosePullRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClosePRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ClosePullRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ClosePullRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ClosePullRequest(ctx, req.(*ClosePRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ReopenPullRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReopenPRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ReopenPullRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ReopenPullRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ReopenPullRequest(ctx, req.(*ReopenPRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_GetPullRequestDiff_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPRDiffRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetPullRequestDiff(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetPullRequestDiff_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetPullRequestDiff(ctx, req.(*GetPRDiffRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreatePRComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePRCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreatePRComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreatePRComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreatePRComment(ctx, req.(*CreatePRCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListPRComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPRCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListPRComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListPRComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListPRComments(ctx, req.(*ListPRCommentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdatePRComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePRCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdatePRComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdatePRComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdatePRComment(ctx, req.(*UpdatePRCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_DeletePRComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePRCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DeletePRComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DeletePRComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DeletePRComment(ctx, req.(*DeletePRCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreatePRReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreatePRReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreatePRReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreatePRReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreatePRReview(ctx, req.(*CreatePRReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListPRReviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPRReviewsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListPRReviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListPRReviews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListPRReviews(ctx, req.(*ListPRReviewsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_AddPRLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddPRLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).AddPRLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_AddPRLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).AddPRLabel(ctx, req.(*AddPRLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_RemovePRLabel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemovePRLabelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).RemovePRLabel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_RemovePRLabel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).RemovePRLabel(ctx, req.(*RemovePRLabelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_AddPRAssignee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddPRAssigneeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).AddPRAssignee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_AddPRAssignee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).AddPRAssignee(ctx, req.(*AddPRAssigneeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_RemovePRAssignee_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemovePRAssigneeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).RemovePRAssignee(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_RemovePRAssignee_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).RemovePRAssignee(ctx, req.(*RemovePRAssigneeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreateWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreateWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreateWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreateWebhook(ctx, req.(*CreateWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_GetWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetWebhook(ctx, req.(*GetWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListWebhooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWebhooksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListWebhooks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListWebhooks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListWebhooks(ctx, req.(*ListWebhooksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdateWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdateWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdateWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdateWebhook(ctx, req.(*UpdateWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_DeleteWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DeleteWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DeleteWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DeleteWebhook(ctx, req.(*DeleteWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_PingWebhook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingWebhookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).PingWebhook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_PingWebhook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).PingWebhook(ctx, req.(*PingWebhookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_SearchRepositories_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).SearchRepositories(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_SearchRepositories_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).SearchRepositories(ctx, req.(*SearchReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_SearchUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).SearchUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_SearchUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).SearchUsers(ctx, req.(*SearchUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_SearchIssues_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchIssuesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).SearchIssues(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_SearchIssues_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).SearchIssues(ctx, req.(*SearchIssuesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GytService_ServiceDesc is the grpc.ServiceDesc for GytService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2036,7 +3782,211 @@ var GytService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetOrgMembership",
 			Handler:    _GytService_GetOrgMembership_Handler,
 		},
+		{
+			MethodName: "StarRepository",
+			Handler:    _GytService_StarRepository_Handler,
+		},
+		{
+			MethodName: "UnstarRepository",
+			Handler:    _GytService_UnstarRepository_Handler,
+		},
+		{
+			MethodName: "CheckStar",
+			Handler:    _GytService_CheckStar_Handler,
+		},
+		{
+			MethodName: "ListStargazers",
+			Handler:    _GytService_ListStargazers_Handler,
+		},
+		{
+			MethodName: "ListStarredRepositories",
+			Handler:    _GytService_ListStarredRepositories_Handler,
+		},
+		{
+			MethodName: "CreateLabel",
+			Handler:    _GytService_CreateLabel_Handler,
+		},
+		{
+			MethodName: "GetLabel",
+			Handler:    _GytService_GetLabel_Handler,
+		},
+		{
+			MethodName: "ListLabels",
+			Handler:    _GytService_ListLabels_Handler,
+		},
+		{
+			MethodName: "UpdateLabel",
+			Handler:    _GytService_UpdateLabel_Handler,
+		},
+		{
+			MethodName: "DeleteLabel",
+			Handler:    _GytService_DeleteLabel_Handler,
+		},
+		{
+			MethodName: "CreateIssue",
+			Handler:    _GytService_CreateIssue_Handler,
+		},
+		{
+			MethodName: "GetIssue",
+			Handler:    _GytService_GetIssue_Handler,
+		},
+		{
+			MethodName: "ListIssues",
+			Handler:    _GytService_ListIssues_Handler,
+		},
+		{
+			MethodName: "UpdateIssue",
+			Handler:    _GytService_UpdateIssue_Handler,
+		},
+		{
+			MethodName: "CloseIssue",
+			Handler:    _GytService_CloseIssue_Handler,
+		},
+		{
+			MethodName: "ReopenIssue",
+			Handler:    _GytService_ReopenIssue_Handler,
+		},
+		{
+			MethodName: "AddIssueLabel",
+			Handler:    _GytService_AddIssueLabel_Handler,
+		},
+		{
+			MethodName: "RemoveIssueLabel",
+			Handler:    _GytService_RemoveIssueLabel_Handler,
+		},
+		{
+			MethodName: "AddIssueAssignee",
+			Handler:    _GytService_AddIssueAssignee_Handler,
+		},
+		{
+			MethodName: "RemoveIssueAssignee",
+			Handler:    _GytService_RemoveIssueAssignee_Handler,
+		},
+		{
+			MethodName: "CreateIssueComment",
+			Handler:    _GytService_CreateIssueComment_Handler,
+		},
+		{
+			MethodName: "ListIssueComments",
+			Handler:    _GytService_ListIssueComments_Handler,
+		},
+		{
+			MethodName: "UpdateIssueComment",
+			Handler:    _GytService_UpdateIssueComment_Handler,
+		},
+		{
+			MethodName: "DeleteIssueComment",
+			Handler:    _GytService_DeleteIssueComment_Handler,
+		},
+		{
+			MethodName: "CreatePullRequest",
+			Handler:    _GytService_CreatePullRequest_Handler,
+		},
+		{
+			MethodName: "GetPullRequest",
+			Handler:    _GytService_GetPullRequest_Handler,
+		},
+		{
+			MethodName: "ListPullRequests",
+			Handler:    _GytService_ListPullRequests_Handler,
+		},
+		{
+			MethodName: "UpdatePullRequest",
+			Handler:    _GytService_UpdatePullRequest_Handler,
+		},
+		{
+			MethodName: "MergePullRequest",
+			Handler:    _GytService_MergePullRequest_Handler,
+		},
+		{
+			MethodName: "ClosePullRequest",
+			Handler:    _GytService_ClosePullRequest_Handler,
+		},
+		{
+			MethodName: "ReopenPullRequest",
+			Handler:    _GytService_ReopenPullRequest_Handler,
+		},
+		{
+			MethodName: "GetPullRequestDiff",
+			Handler:    _GytService_GetPullRequestDiff_Handler,
+		},
+		{
+			MethodName: "CreatePRComment",
+			Handler:    _GytService_CreatePRComment_Handler,
+		},
+		{
+			MethodName: "ListPRComments",
+			Handler:    _GytService_ListPRComments_Handler,
+		},
+		{
+			MethodName: "UpdatePRComment",
+			Handler:    _GytService_UpdatePRComment_Handler,
+		},
+		{
+			MethodName: "DeletePRComment",
+			Handler:    _GytService_DeletePRComment_Handler,
+		},
+		{
+			MethodName: "CreatePRReview",
+			Handler:    _GytService_CreatePRReview_Handler,
+		},
+		{
+			MethodName: "ListPRReviews",
+			Handler:    _GytService_ListPRReviews_Handler,
+		},
+		{
+			MethodName: "AddPRLabel",
+			Handler:    _GytService_AddPRLabel_Handler,
+		},
+		{
+			MethodName: "RemovePRLabel",
+			Handler:    _GytService_RemovePRLabel_Handler,
+		},
+		{
+			MethodName: "AddPRAssignee",
+			Handler:    _GytService_AddPRAssignee_Handler,
+		},
+		{
+			MethodName: "RemovePRAssignee",
+			Handler:    _GytService_RemovePRAssignee_Handler,
+		},
+		{
+			MethodName: "CreateWebhook",
+			Handler:    _GytService_CreateWebhook_Handler,
+		},
+		{
+			MethodName: "GetWebhook",
+			Handler:    _GytService_GetWebhook_Handler,
+		},
+		{
+			MethodName: "ListWebhooks",
+			Handler:    _GytService_ListWebhooks_Handler,
+		},
+		{
+			MethodName: "UpdateWebhook",
+			Handler:    _GytService_UpdateWebhook_Handler,
+		},
+		{
+			MethodName: "DeleteWebhook",
+			Handler:    _GytService_DeleteWebhook_Handler,
+		},
+		{
+			MethodName: "PingWebhook",
+			Handler:    _GytService_PingWebhook_Handler,
+		},
+		{
+			MethodName: "SearchRepositories",
+			Handler:    _GytService_SearchRepositories_Handler,
+		},
+		{
+			MethodName: "SearchUsers",
+			Handler:    _GytService_SearchUsers_Handler,
+		},
+		{
+			MethodName: "SearchIssues",
+			Handler:    _GytService_SearchIssues_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pkg/grpc/service.proto",
+	Metadata: "service.proto",
 }

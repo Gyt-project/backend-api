@@ -203,3 +203,189 @@ func int32Ptr(v *int) *int32 {
 func blobToBase64(b []byte) string {
 	return base64.StdEncoding.EncodeToString(b)
 }
+
+// ─── Helpers déplacés depuis schema.resolvers.go ──────────────────────────────
+
+func pbListReposToModel(resp *pb.ListReposResponse) *model.ListReposResponse {
+	out := &model.ListReposResponse{
+		Total:   int(resp.GetTotal()),
+		Page:    int(resp.GetPage()),
+		PerPage: int(resp.GetPerPage()),
+	}
+	for _, r := range resp.GetRepositories() {
+		out.Repositories = append(out.Repositories, pbRepoToModel(r))
+	}
+	return out
+}
+
+func pbListCommitsToModel(resp *pb.ListCommitsResponse) *model.ListCommitsResponse {
+	out := &model.ListCommitsResponse{
+		Page:    int(resp.GetPage()),
+		PerPage: int(resp.GetPerPage()),
+		HasMore: resp.GetHasMore(),
+	}
+	for _, c := range resp.GetCommits() {
+		out.Commits = append(out.Commits, pbCommitToModel(c))
+	}
+	return out
+}
+
+func pbCompareToModel(resp *pb.CompareResponse) *model.CompareResponse {
+	out := &model.CompareResponse{
+		TotalAdditions: int(resp.GetTotalAdditions()),
+		TotalDeletions: int(resp.GetTotalDeletions()),
+		FilesChanged:   int(resp.GetFilesChanged()),
+		CommitsAhead:   int(resp.GetCommitsAhead()),
+	}
+	for _, c := range resp.GetCommits() {
+		out.Commits = append(out.Commits, pbCommitToModel(c))
+	}
+	for _, f := range resp.GetFiles() {
+		out.Files = append(out.Files, pbFileDiffToModel(f))
+	}
+	return out
+}
+
+// ─── Nouveaux mappers proto → model ──────────────────────────────────────────
+
+func pbLabelToModel(l *pb.LabelResponse) *model.Label {
+	if l == nil {
+		return nil
+	}
+	return &model.Label{
+		ID:          fmt.Sprintf("%d", l.GetId()),
+		Name:        l.GetName(),
+		Color:       l.GetColor(),
+		Description: l.GetDescription(),
+	}
+}
+
+func pbIssueToModel(i *pb.IssueResponse) *model.Issue {
+	if i == nil {
+		return nil
+	}
+	out := &model.Issue{
+		ID:           fmt.Sprintf("%d", i.GetId()),
+		Number:       int(i.GetNumber()),
+		Title:        i.GetTitle(),
+		Body:         i.GetBody(),
+		State:        i.GetState(),
+		Author:       pbUserToModel(i.GetAuthor()),
+		CommentCount: int(i.GetCommentCount()),
+		CreatedAt:    i.GetCreatedAt().AsTime(),
+		UpdatedAt:    i.GetUpdatedAt().AsTime(),
+	}
+	for _, u := range i.GetAssignees() {
+		out.Assignees = append(out.Assignees, pbUserToModel(u))
+	}
+	for _, l := range i.GetLabels() {
+		out.Labels = append(out.Labels, pbLabelToModel(l))
+	}
+	if i.ClosedAt != nil {
+		t := i.GetClosedAt().AsTime()
+		out.ClosedAt = &t
+	}
+	return out
+}
+
+func pbIssueCommentToModel(c *pb.IssueCommentResponse) *model.IssueComment {
+	if c == nil {
+		return nil
+	}
+	return &model.IssueComment{
+		ID:        fmt.Sprintf("%d", c.GetId()),
+		Body:      c.GetBody(),
+		Author:    pbUserToModel(c.GetAuthor()),
+		CreatedAt: c.GetCreatedAt().AsTime(),
+		UpdatedAt: c.GetUpdatedAt().AsTime(),
+	}
+}
+
+func pbPRToModel(pr *pb.PullRequestResponse) *model.PullRequest {
+	if pr == nil {
+		return nil
+	}
+	out := &model.PullRequest{
+		ID:           fmt.Sprintf("%d", pr.GetId()),
+		Number:       int(pr.GetNumber()),
+		Title:        pr.GetTitle(),
+		Body:         pr.GetBody(),
+		State:        pr.GetState(),
+		HeadBranch:   pr.GetHeadBranch(),
+		BaseBranch:   pr.GetBaseBranch(),
+		HeadSha:      pr.GetHeadSha(),
+		Author:       pbUserToModel(pr.GetAuthor()),
+		Mergeable:    pr.GetMergeable(),
+		Merged:       pr.GetMerged(),
+		CommentCount: int(pr.GetCommentCount()),
+		Commits:      int(pr.GetCommits()),
+		Additions:    int(pr.GetAdditions()),
+		Deletions:    int(pr.GetDeletions()),
+		ChangedFiles: int(pr.GetChangedFiles()),
+		CreatedAt:    pr.GetCreatedAt().AsTime(),
+		UpdatedAt:    pr.GetUpdatedAt().AsTime(),
+	}
+	for _, u := range pr.GetAssignees() {
+		out.Assignees = append(out.Assignees, pbUserToModel(u))
+	}
+	for _, l := range pr.GetLabels() {
+		out.Labels = append(out.Labels, pbLabelToModel(l))
+	}
+	if pr.MergedAt != nil {
+		t := pr.GetMergedAt().AsTime()
+		out.MergedAt = &t
+	}
+	return out
+}
+
+func pbPRCommentToModel(c *pb.PRCommentResponse) *model.PRComment {
+	if c == nil {
+		return nil
+	}
+	out := &model.PRComment{
+		ID:        fmt.Sprintf("%d", c.GetId()),
+		Body:      c.GetBody(),
+		Author:    pbUserToModel(c.GetAuthor()),
+		CreatedAt: c.GetCreatedAt().AsTime(),
+		UpdatedAt: c.GetUpdatedAt().AsTime(),
+	}
+	if c.Path != nil {
+		p := c.GetPath()
+		out.Path = &p
+	}
+	if c.Line != nil {
+		l := int(c.GetLine())
+		out.Line = &l
+	}
+	return out
+}
+
+func pbPRReviewToModel(r *pb.PRReviewResponse) *model.PRReview {
+	if r == nil {
+		return nil
+	}
+	return &model.PRReview{
+		ID:          fmt.Sprintf("%d", r.GetId()),
+		Reviewer:    pbUserToModel(r.GetReviewer()),
+		State:       r.GetState(),
+		Body:        r.GetBody(),
+		SubmittedAt: r.GetSubmittedAt().AsTime(),
+	}
+}
+
+func pbWebhookToModel(w *pb.WebhookResponse) *model.Webhook {
+	if w == nil {
+		return nil
+	}
+	return &model.Webhook{
+		ID:          fmt.Sprintf("%d", w.GetId()),
+		URL:         w.GetUrl(),
+		Events:      w.GetEvents(),
+		Active:      w.GetActive(),
+		ContentType: w.GetContentType(),
+		CreatedAt:   w.GetCreatedAt().AsTime(),
+		UpdatedAt:   w.GetUpdatedAt().AsTime(),
+	}
+}
+
+
