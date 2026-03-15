@@ -22,8 +22,15 @@ func (s *StarService) StarRepository(ctx context.Context, callerID uint, owner, 
 	if err := orm.DB.FirstOrCreate(star, star).Error; err != nil {
 		return status.Errorf(codes.Internal, "failed to star repository: %v", err)
 	}
-	return orm.DB.Model(&models.Repository{}).Where("id = ?", repo.ID).
-		UpdateColumn("stars", orm.DB.Raw("stars + 1")).Error
+	if err := orm.DB.Model(&models.Repository{}).Where("id = ?", repo.ID).
+		UpdateColumn("stars", orm.DB.Raw("stars + 1")).Error; err != nil {
+		return err
+	}
+	DispatchWebhook(repo.ID, "star", map[string]interface{}{
+		"action":     "created",
+		"repository": owner + "/" + name,
+	})
+	return nil
 }
 
 // UnstarRepository retire l'étoile d'un dépôt pour l'utilisateur connecté.
@@ -40,6 +47,10 @@ func (s *StarService) UnstarRepository(ctx context.Context, callerID uint, owner
 	if res.RowsAffected > 0 {
 		orm.DB.Model(&models.Repository{}).Where("id = ?", repo.ID).
 			UpdateColumn("stars", orm.DB.Raw("GREATEST(stars - 1, 0)"))
+		DispatchWebhook(repo.ID, "star", map[string]interface{}{
+			"action":     "deleted",
+			"repository": owner + "/" + name,
+		})
 	}
 	return nil
 }
@@ -119,4 +130,3 @@ func resolveRepo(ctx context.Context, owner, name string) (*models.Repository, e
 	}
 	return &repo, nil
 }
-

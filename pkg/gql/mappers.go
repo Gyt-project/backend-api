@@ -236,6 +236,7 @@ func pbCompareToModel(resp *pb.CompareResponse) *model.CompareResponse {
 		TotalDeletions: int(resp.GetTotalDeletions()),
 		FilesChanged:   int(resp.GetFilesChanged()),
 		CommitsAhead:   int(resp.GetCommitsAhead()),
+		Patch:          resp.GetPatch(),
 	}
 	for _, c := range resp.GetCommits() {
 		out.Commits = append(out.Commits, pbCommitToModel(c))
@@ -387,5 +388,3 @@ func pbWebhookToModel(w *pb.WebhookResponse) *model.Webhook {
 		UpdatedAt:   w.GetUpdatedAt().AsTime(),
 	}
 }
-
-

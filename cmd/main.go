@@ -42,12 +42,26 @@ func main() {
 	log.Println("Database connected")
 
 	err = orm.RegisterModels(
+		// core
 		&models.User{},
 		&models.Organization{},
 		&models.OrgMembership{},
 		&models.Repository{},
 		&models.RepoCollaborator{},
 		&models.SSHKey{},
+		// stars
+		&models.Star{},
+		// labels (doit précéder Issue et PullRequest)
+		&models.Label{},
+		// issues
+		&models.Issue{},
+		&models.IssueComment{},
+		// pull requests
+		&models.PullRequest{},
+		&models.PRComment{},
+		&models.PRReview{},
+		// webhooks
+		&models.Webhook{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate models: %v", err)

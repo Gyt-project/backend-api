@@ -63,7 +63,20 @@ func (s *PRService) CreatePullRequest(ctx context.Context, callerID uint, owner,
 	}
 	s.attachPRAssignees(pr.ID, assignees)
 	s.attachPRLabels(pr.ID, r.ID, labels)
-	return s.loadPR(r.ID, pr.Number)
+	loaded, err := s.loadPR(r.ID, pr.Number)
+	if err != nil {
+		return nil, err
+	}
+	DispatchWebhook(r.ID, "pull_request", map[string]interface{}{
+		"action":     "opened",
+		"number":     loaded.Number,
+		"title":      loaded.Title,
+		"state":      loaded.State,
+		"head":       head,
+		"base":       base,
+		"repository": owner + "/" + repo,
+	})
+	return loaded, nil
 }
 
 func (s *PRService) GetPullRequest(ctx context.Context, owner, repo string, number int) (*models.PullRequest, error) {
@@ -74,19 +87,40 @@ func (s *PRService) GetPullRequest(ctx context.Context, owner, repo string, numb
 	return s.loadPR(r.ID, number)
 }
 
-func (s *PRService) ListPullRequests(ctx context.Context, owner, repo string, state, author, assignee, label, base *string, page, perPage int) ([]models.PullRequest, int64, error) {
-	r, err := resolveRepo(ctx, owner, repo)
-	if err != nil {
-		return nil, 0, err
-	}
+func (s *PRService) ListPullRequests(ctx context.Context, owner string, repo *string, state, author, assignee, label, base *string, page, perPage int) ([]models.PullRequest, int64, error) {
 	if page < 1 {
 		page = 1
 	}
 	if perPage < 1 {
 		perPage = 30
 	}
-	q := orm.DB.Model(&models.PullRequest{}).Where("repository_id = ?", r.ID).
+
+	q := orm.DB.Model(&models.PullRequest{}).
 		Preload("Author").Preload("Assignees").Preload("Labels")
+
+	if repo != nil && *repo != "" {
+		// Filtrer par repo spécifique
+		r, err := resolveRepo(ctx, owner, *repo)
+		if err != nil {
+			return nil, 0, err
+		}
+		q = q.Where("repository_id = ?", r.ID)
+	} else {
+		// Tous les repos du owner
+		rs := &RepoService{}
+		ownerID, ownerType, _, err := rs.resolveOwner(ctx, owner)
+		if err != nil {
+			return nil, 0, err
+		}
+		var repoIDs []uint
+		orm.DB.Model(&models.Repository{}).
+			Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).
+			Pluck("id", &repoIDs)
+		if len(repoIDs) == 0 {
+			return []models.PullRequest{}, 0, nil
+		}
+		q = q.Where("repository_id IN ?", repoIDs)
+	}
 	if state != nil && *state != "all" {
 		q = q.Where("state = ?", *state)
 	}

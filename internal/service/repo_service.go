@@ -166,8 +166,9 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 	}
 
 	// Créer dans soft-serve
+	gitRepoName := fmt.Sprintf("%s/%s", gitOwnerUsername, name)
 	_, err := gitClient.GitClient.CreateRepository(ctx, &ssgrpc.CreateRepositoryRequest{
-		Name:        name,
+		Name:        gitRepoName,
 		Description: description,
 		Username:    gitOwnerUsername,
 		Private:     isPrivate,
@@ -181,12 +182,12 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 		Description:   description,
 		IsPrivate:     isPrivate,
 		DefaultBranch: "main",
-		GitRepoName:   name,
+		GitRepoName:   gitRepoName,
 		OwnerID:       ownerID,
 		OwnerType:     ownerType,
 	}
 	if err := orm.DB.Create(repo).Error; err != nil {
-		_ = gitClient.GitClient.DeleteRepository(ctx, &ssgrpc.DeleteRepositoryRequest{Name: name})
+		_ = gitClient.GitClient.DeleteRepository(ctx, &ssgrpc.DeleteRepositoryRequest{Name: gitRepoName})
 		return nil, status.Errorf(codes.Internal, "failed to persist repository: %v", err)
 	}
 	return repo, nil
@@ -390,6 +391,28 @@ func (s *RepoService) RenameRepository(ctx context.Context, callerID uint, owner
 
 // ─── Content proxies ────────────────────────────────────────────────────────
 
+// isEmptyRepoErr détecte les erreurs soft-serve typiques d'un dépôt vide
+// (aucun commit, HEAD inexistant, révision introuvable, références manquantes).
+func isEmptyRepoErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	for _, needle := range []string{
+		"reference does not exist",
+		"revision does not exist",
+		"failed to get references",
+		"failed to get HEAD",
+		"tree not found",
+		"object not found",
+	} {
+		if strings.Contains(msg, needle) {
+			return true
+		}
+	}
+	return false
+}
+
 // GetRepositoryTree retourne l'arbre de fichiers d'un dépôt
 func (s *RepoService) GetRepositoryTree(ctx context.Context, callerID uint, ownerName, repoName string, ref, path *string) (*ssgrpc.GetTreeResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
@@ -403,7 +426,14 @@ func (s *RepoService) GetRepositoryTree(ctx context.Context, callerID uint, owne
 	if path != nil {
 		req.Path = path
 	}
-	return gitClient.GitClient.GetTree(ctx, req)
+	res, err := gitClient.GitClient.GetTree(ctx, req)
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.GetTreeResponse{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetFileBlob retourne le contenu d'un fichier
@@ -425,7 +455,45 @@ func (s *RepoService) ListBranches(ctx context.Context, callerID uint, ownerName
 	if err != nil {
 		return nil, err
 	}
-	return gitClient.GitClient.GetBranches(ctx, &ssgrpc.GetBranchesRequest{RepoName: repo.GitRepoName})
+	res, err := gitClient.GitClient.GetBranches(ctx, &ssgrpc.GetBranchesRequest{RepoName: repo.GitRepoName})
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.GetBranchesResponse{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
+}
+
+// CreateBranch crée une nouvelle branche dans un dépôt
+func (s *RepoService) CreateBranch(ctx context.Context, callerID uint, ownerName, repoName, branchName, source string) (*ssgrpc.Branch, error) {
+	repo, err := s.getRepoByOwnerAndName(ctx, ownerName, repoName)
+	if err != nil {
+		return nil, err
+	}
+	if !s.canWriteRepo(ctx, callerID, repo) {
+		return nil, status.Error(codes.PermissionDenied, "write access required")
+	}
+	return gitClient.GitClient.CreateBranch(ctx, &ssgrpc.CreateBranchRequest{
+		RepoName:   repo.GitRepoName,
+		BranchName: branchName,
+		Source:     source,
+	})
+}
+
+// DeleteBranch supprime une branche dans un dépôt
+func (s *RepoService) DeleteBranch(ctx context.Context, callerID uint, ownerName, repoName, branchName string) error {
+	repo, err := s.getRepoByOwnerAndName(ctx, ownerName, repoName)
+	if err != nil {
+		return err
+	}
+	if !s.canWriteRepo(ctx, callerID, repo) {
+		return status.Error(codes.PermissionDenied, "write access required")
+	}
+	return gitClient.GitClient.DeleteBranch(ctx, &ssgrpc.DeleteBranchRequest{
+		RepoName:   repo.GitRepoName,
+		BranchName: branchName,
+	})
 }
 
 // GetDefaultBranch retourne la branche par défaut d'un dépôt
@@ -434,7 +502,15 @@ func (s *RepoService) GetDefaultBranch(ctx context.Context, callerID uint, owner
 	if err != nil {
 		return nil, err
 	}
-	return gitClient.GitClient.GetDefaultBranch(ctx, &ssgrpc.GetDefaultBranchRequest{RepoName: repo.GitRepoName})
+	res, err := gitClient.GitClient.GetDefaultBranch(ctx, &ssgrpc.GetDefaultBranchRequest{RepoName: repo.GitRepoName})
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			// Repo vide : retourner la valeur stockée en DB
+			return &ssgrpc.DefaultBranchResponse{BranchName: repo.DefaultBranch}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // SetDefaultBranch change la branche par défaut d'un dépôt
@@ -463,7 +539,14 @@ func (s *RepoService) ListTags(ctx context.Context, callerID uint, ownerName, re
 	if err != nil {
 		return nil, err
 	}
-	return gitClient.GitClient.ListTags(ctx, &ssgrpc.ListTagsRequest{RepoName: repo.GitRepoName})
+	res, err := gitClient.GitClient.ListTags(ctx, &ssgrpc.ListTagsRequest{RepoName: repo.GitRepoName})
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.ListTagsResponse{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // CreateTag crée un tag dans un dépôt
@@ -510,7 +593,14 @@ func (s *RepoService) ListCommits(ctx context.Context, callerID uint, ownerName,
 	}
 	req.Limit = &limit
 	req.Page = &page
-	return gitClient.GitClient.ListCommits(ctx, req)
+	res, err := gitClient.GitClient.ListCommits(ctx, req)
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.ListCommitsResponse{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetCommit retourne le détail d'un commit
@@ -528,7 +618,14 @@ func (s *RepoService) GetRepositoryStats(ctx context.Context, callerID uint, own
 	if err != nil {
 		return nil, err
 	}
-	return gitClient.GitClient.GetRepositoryStats(ctx, &ssgrpc.GetRepositoryStatsRequest{RepoName: repo.GitRepoName})
+	res, err := gitClient.GitClient.GetRepositoryStats(ctx, &ssgrpc.GetRepositoryStatsRequest{RepoName: repo.GitRepoName})
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.RepositoryStatsResponse{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetCloneURLs retourne les URLs de clone d'un dépôt
@@ -596,7 +693,14 @@ func (s *RepoService) SearchCommits(ctx context.Context, callerID uint, ownerNam
 	if ref != nil {
 		req.Ref = ref
 	}
-	return gitClient.GitClient.SearchCommits(ctx, req)
+	res, err := gitClient.GitClient.SearchCommits(ctx, req)
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.ListCommitsResponse{}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // CheckPath vérifie si un chemin existe dans le dépôt
@@ -609,7 +713,14 @@ func (s *RepoService) CheckPath(ctx context.Context, callerID uint, ownerName, r
 	if ref != nil {
 		req.Ref = ref
 	}
-	return gitClient.GitClient.CheckPath(ctx, req)
+	res, err := gitClient.GitClient.CheckPath(ctx, req)
+	if err != nil {
+		if isEmptyRepoErr(err) {
+			return &ssgrpc.CheckPathResponse{Exists: false}, nil
+		}
+		return nil, err
+	}
+	return res, nil
 }
 
 // ─── Collaborateurs ─────────────────────────────────────────────────────────

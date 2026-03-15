@@ -15,7 +15,7 @@ const (
 
 // Repository représente un dépôt GYT.
 // Le champ GitRepoName correspond au nom utilisé côté soft-serve.
-// Format : "<gitOwnerUsername>/<repoName>"
+// Format : "<gitOwnerUsername>/<repoName>"  (ex: "alice/monrepo")
 type Repository struct {
 	BaseModel
 	UUID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();uniqueIndex"`

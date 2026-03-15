@@ -1,8 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"net/http"
+	"time"
 
 	"github.com/Gyt-project/backend-api/internal/orm"
 	"github.com/Gyt-project/backend-api/pkg/models"
@@ -123,11 +129,72 @@ func (s *WebhookService) DeleteWebhook(ctx context.Context, owner string, repo *
 	return orm.DB.Delete(wh).Error
 }
 
-// PingWebhook est un no-op dans le cadre de l'implémentation de base.
-// En production, il déclencherait un appel HTTP test vers l'URL du webhook.
+// PingWebhook sends a test ping payload to the webhook URL.
 func (s *WebhookService) PingWebhook(ctx context.Context, owner string, repo *string, id uint) error {
-	_, err := s.GetWebhook(ctx, owner, repo, id)
-	return err
+	wh, err := s.GetWebhook(ctx, owner, repo, id)
+	if err != nil {
+		return err
+	}
+	payload, _ := json.Marshal(map[string]interface{}{
+		"event":   "ping",
+		"hook_id": wh.ID,
+		"zen":     "Webhooks are great for automation.",
+	})
+	sendWebhookRequest(*wh, "ping", payload)
+	return nil
+}
+
+// DispatchWebhook looks up active webhooks for repoID that subscribe to event
+// and sends each one in a background goroutine.
+func DispatchWebhook(repoID uint, event string, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	var webhooks []models.Webhook
+	orm.DB.Where("repository_id = ? AND active = ?", repoID, true).Find(&webhooks)
+	for _, wh := range webhooks {
+		if webhookMatchesEvent(wh, event) {
+			wh := wh // capture loop variable
+			go sendWebhookRequest(wh, event, data)
+		}
+	}
+}
+
+func webhookMatchesEvent(wh models.Webhook, event string) bool {
+	var events []string
+	json.Unmarshal([]byte(wh.Events), &events) //nolint:errcheck
+	for _, e := range events {
+		if e == event {
+			return true
+		}
+	}
+	return false
+}
+
+func sendWebhookRequest(wh models.Webhook, event string, payload []byte) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, wh.URL, bytes.NewReader(payload))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Gyt-Event", event)
+	req.Header.Set("User-Agent", "Gyt-Webhooks/1.0")
+
+	if wh.Secret != "" {
+		mac := hmac.New(sha256.New, []byte(wh.Secret))
+		mac.Write(payload)
+		req.Header.Set("X-Gyt-Signature-256", "sha256="+hex.EncodeToString(mac.Sum(nil)))
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
 }
 
 // DecodeEvents désérialise la liste d'événements JSON stockée en base.
@@ -136,4 +203,3 @@ func DecodeEvents(raw string) []string {
 	json.Unmarshal([]byte(raw), &events)
 	return events
 }
-

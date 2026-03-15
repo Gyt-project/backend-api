@@ -20,7 +20,7 @@ help:
 
 # ─── Génération ──────────────────────────────────────────────────────────────
 
-## 1. Régénère service.pb.go + service_grpc.pb.go depuis service.proto
+## 1. Régénère backend_api.pb.go + backend_api_grpc.pb.go depuis backend_api.proto
 proto:
 	@echo "▶ [proto] Régénération des stubs gRPC..."
 	protoc \
@@ -29,7 +29,7 @@ proto:
 		--go-grpc_out=pkg/grpc \
 		--go-grpc_opt=paths=source_relative \
 		-I pkg/grpc \
-		pkg/grpc/service.proto
+		pkg/grpc/backend_api.proto
 	@echo "✅ gRPC stubs régénérés dans pkg/grpc/"
 
 ## 2. Régénère generated.go + models_gen.go depuis schema.graphql

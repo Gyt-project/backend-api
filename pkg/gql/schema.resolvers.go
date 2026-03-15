@@ -164,6 +164,33 @@ func (r *mutationResolver) SetDefaultBranch(ctx context.Context, owner string, n
 	return &model.DefaultBranchResponse{BranchName: resp.GetBranchName()}, nil
 }
 
+// CreateBranch is the resolver for the createBranch field.
+func (r *mutationResolver) CreateBranch(ctx context.Context, owner string, name string, branchName string, source string) (*model.Branch, error) {
+	resp, err := r.Client.CreateBranch(grpcCtx(ctx), &pb.CreateBranchRequest{
+		Owner:      owner,
+		Name:       name,
+		BranchName: branchName,
+		Source:     source,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return pbBranchToModel(resp), nil
+}
+
+// DeleteBranch is the resolver for the deleteBranch field.
+func (r *mutationResolver) DeleteBranch(ctx context.Context, owner string, name string, branchName string) (bool, error) {
+	_, err := r.Client.DeleteBranch(grpcCtx(ctx), &pb.DeleteBranchRequest{
+		Owner:      owner,
+		Name:       name,
+		BranchName: branchName,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CreateTag is the resolver for the createTag field.
 func (r *mutationResolver) CreateTag(ctx context.Context, input model.CreateTagInput) (*model.TagDetail, error) {
 	resp, err := r.Client.CreateTag(grpcCtx(ctx), &pb.CreateTagRequest{
@@ -1134,7 +1161,7 @@ func (r *queryResolver) GetIssue(ctx context.Context, owner string, repo string,
 }
 
 // ListIssues is the resolver for the listIssues field.
-func (r *queryResolver) ListIssues(ctx context.Context, owner string, repo string, state *string, label *string, assignee *string, author *string, page *int, perPage *int) (*model.ListIssuesResponse, error) {
+func (r *queryResolver) ListIssues(ctx context.Context, owner string, repo *string, state *string, label *string, assignee *string, author *string, page *int, perPage *int) (*model.ListIssuesResponse, error) {
 	resp, err := r.Client.ListIssues(grpcCtx(ctx), &pb.ListIssuesRequest{
 		Owner:    owner,
 		Repo:     repo,
@@ -1182,7 +1209,7 @@ func (r *queryResolver) GetPullRequest(ctx context.Context, owner string, repo s
 }
 
 // ListPullRequests is the resolver for the listPullRequests field.
-func (r *queryResolver) ListPullRequests(ctx context.Context, owner string, repo string, state *string, author *string, assignee *string, label *string, base *string, page *int, perPage *int) (*model.ListPRsResponse, error) {
+func (r *queryResolver) ListPullRequests(ctx context.Context, owner string, repo *string, state *string, author *string, assignee *string, label *string, base *string, page *int, perPage *int) (*model.ListPRsResponse, error) {
 	resp, err := r.Client.ListPullRequests(grpcCtx(ctx), &pb.ListPRsRequest{
 		Owner:    owner,
 		Repo:     repo,
@@ -1345,49 +1372,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func pbListReposToModel(resp *pb.ListReposResponse) *model.ListReposResponse {
-	out := &model.ListReposResponse{
-		Total:   int(resp.GetTotal()),
-		Page:    int(resp.GetPage()),
-		PerPage: int(resp.GetPerPage()),
-	}
-	for _, r := range resp.GetRepositories() {
-		out.Repositories = append(out.Repositories, pbRepoToModel(r))
-	}
-	return out
-}
-func pbListCommitsToModel(resp *pb.ListCommitsResponse) *model.ListCommitsResponse {
-	out := &model.ListCommitsResponse{
-		Page:    int(resp.GetPage()),
-		PerPage: int(resp.GetPerPage()),
-		HasMore: resp.GetHasMore(),
-	}
-	for _, c := range resp.GetCommits() {
-		out.Commits = append(out.Commits, pbCommitToModel(c))
-	}
-	return out
-}
-func pbCompareToModel(resp *pb.CompareResponse) *model.CompareResponse {
-	out := &model.CompareResponse{
-		TotalAdditions: int(resp.GetTotalAdditions()),
-		TotalDeletions: int(resp.GetTotalDeletions()),
-		FilesChanged:   int(resp.GetFilesChanged()),
-		CommitsAhead:   int(resp.GetCommitsAhead()),
-	}
-	for _, c := range resp.GetCommits() {
-		out.Commits = append(out.Commits, pbCommitToModel(c))
-	}
-	for _, f := range resp.GetFiles() {
-		out.Files = append(out.Files, pbFileDiffToModel(f))
-	}
-	return out
-}
-*/

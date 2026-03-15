@@ -82,3 +82,5 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.44.3 // indirect
 )
+
+replace github.com/Gyt-project/soft-serve => ../custom-soft-serve

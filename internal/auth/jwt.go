@@ -41,7 +41,7 @@ func jwtSecret() []byte {
 }
 
 // AccessTokenDuration durée de vie du token d'accès
-const AccessTokenDuration = 15 * time.Minute
+const AccessTokenDuration = 24 * time.Hour
 
 // RefreshTokenDuration durée de vie du refresh token
 const RefreshTokenDuration = 7 * 24 * time.Hour
@@ -109,32 +109,28 @@ func ParseRefreshToken(tokenStr string) (string, error) {
 	return claims.Subject, nil
 }
 
-// méthodes publiques (pas d'auth requise)
-var publicMethods = map[string]bool{
-	"/gyt.GytService/Register": true,
-	"/gyt.GytService/Login":    true,
-}
-
-// UnaryAuthInterceptor est un intercepteur gRPC qui valide le JWT sur toutes les
-// méthodes sauf celles de la liste publique.
+// UnaryAuthInterceptor is a gRPC interceptor with optional authentication:
+//   - If no Authorization header is present the request is passed through
+//     without user context (anonymous / guest access). Read-only handlers
+//     that already do `callerID, _ := ExtractUserID(ctx)` will receive
+//     callerID=0 and filter private data accordingly.
+//   - If an Authorization header IS present it must be a valid, non-expired
+//     Bearer token; otherwise the request is rejected (prevents use of
+//     tampered or expired tokens).
+//   - Write handlers that call `callerID, err := ExtractUserID(ctx)` still
+//     return Unauthenticated for anonymous callers.
 func UnaryAuthInterceptor(
 	ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (interface{}, error) {
-	if publicMethods[info.FullMethod] {
-		return handler(ctx, req)
-	}
-
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "missing metadata")
-	}
-
+	md, _ := metadata.FromIncomingContext(ctx)
 	authHeaders := md.Get("authorization")
+
+	// No token supplied — allow the request through as anonymous.
 	if len(authHeaders) == 0 {
-		return nil, status.Error(codes.Unauthenticated, "missing authorization header")
+		return handler(ctx, req)
 	}
 
 	bearer := authHeaders[0]
@@ -148,7 +144,7 @@ func UnaryAuthInterceptor(
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
 
-	// Injecter les claims dans le contexte
+	// Inject claims into the context for authenticated requests.
 	ctx = context.WithValue(ctx, ContextKeyUserUUID, claims.UserUUID)
 	ctx = context.WithValue(ctx, ContextKeyUserID, claims.UserID)
 	ctx = context.WithValue(ctx, ContextKeyIsAdmin, claims.IsAdmin)

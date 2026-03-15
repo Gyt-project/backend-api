@@ -17,7 +17,7 @@ STEP="${1:-all}"
 
 # ─── Étape 1 : Régénérer les stubs gRPC ──────────────────────────────────────
 generate_proto() {
-  echo "▶ [1/2] Génération des stubs gRPC depuis service.proto..."
+  echo "▶ [1/2] Génération des stubs gRPC depuis backend_api.proto..."
 
   protoc \
     --go_out=pkg/grpc \
@@ -25,7 +25,7 @@ generate_proto() {
     --go-grpc_out=pkg/grpc \
     --go-grpc_opt=paths=source_relative \
     -I pkg/grpc \
-    pkg/grpc/service.proto
+    pkg/grpc/backend_api.proto
 
   echo "✅ gRPC stubs régénérés dans pkg/grpc/"
   echo ""

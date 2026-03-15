@@ -19,28 +19,28 @@ import (
 // GytServer implémente pb.GytServiceServer
 type GytServer struct {
 	pb.UnimplementedGytServiceServer
-	Users   *service.UserService
-	Repos   *service.RepoService
-	Orgs    *service.OrgService
-	Stars   *service.StarService
-	Labels  *service.LabelService
-	Issues  *service.IssueService
-	PRs     *service.PRService
+	Users    *service.UserService
+	Repos    *service.RepoService
+	Orgs     *service.OrgService
+	Stars    *service.StarService
+	Labels   *service.LabelService
+	Issues   *service.IssueService
+	PRs      *service.PRService
 	Webhooks *service.WebhookService
-	Search  *service.SearchService
+	Search   *service.SearchService
 }
 
 func NewGytServer() *GytServer {
 	return &GytServer{
-		Users:   &service.UserService{},
-		Repos:   &service.RepoService{},
-		Orgs:    &service.OrgService{},
-		Stars:   &service.StarService{},
-		Labels:  &service.LabelService{},
-		Issues:  &service.IssueService{},
-		PRs:     &service.PRService{},
+		Users:    &service.UserService{},
+		Repos:    &service.RepoService{},
+		Orgs:     &service.OrgService{},
+		Stars:    &service.StarService{},
+		Labels:   &service.LabelService{},
+		Issues:   &service.IssueService{},
+		PRs:      &service.PRService{},
 		Webhooks: &service.WebhookService{},
-		Search:  &service.SearchService{},
+		Search:   &service.SearchService{},
 	}
 }
 
@@ -333,6 +333,33 @@ func (s *GytServer) ListBranches(ctx context.Context, req *pb.ListBranchesReques
 		})
 	}
 	return resp, nil
+}
+
+func (s *GytServer) CreateBranch(ctx context.Context, req *pb.CreateBranchRequest) (*pb.BranchResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	b, err := s.Repos.CreateBranch(ctx, callerID, req.GetOwner(), req.GetName(), req.GetBranchName(), req.GetSource())
+	if err != nil {
+		return nil, err
+	}
+	return &pb.BranchResponse{
+		Name:      b.GetName(),
+		FullName:  b.GetFullName(),
+		CommitSha: b.GetCommitSha(),
+	}, nil
+}
+
+func (s *GytServer) DeleteBranch(ctx context.Context, req *pb.DeleteBranchRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.Repos.DeleteBranch(ctx, callerID, req.GetOwner(), req.GetName(), req.GetBranchName()); err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, nil
 }
 
 func (s *GytServer) GetDefaultBranch(ctx context.Context, req *pb.GetDefaultBranchRequest) (*pb.DefaultBranchResponse, error) {
@@ -848,7 +875,7 @@ func (s *GytServer) GetIssue(ctx context.Context, req *pb.GetIssueRequest) (*pb.
 }
 
 func (s *GytServer) ListIssues(ctx context.Context, req *pb.ListIssuesRequest) (*pb.ListIssuesResponse, error) {
-	issues, total, err := s.Issues.ListIssues(ctx, req.GetOwner(), req.GetRepo(), req.State, req.Label, req.Assignee, req.Author, int(req.GetPage()), int(req.GetPerPage()))
+	issues, total, err := s.Issues.ListIssues(ctx, req.GetOwner(), req.Repo, req.State, req.Label, req.Assignee, req.Author, int(req.GetPage()), int(req.GetPerPage()))
 	if err != nil {
 		return nil, err
 	}
@@ -978,7 +1005,7 @@ func (s *GytServer) GetPullRequest(ctx context.Context, req *pb.GetPRRequest) (*
 }
 
 func (s *GytServer) ListPullRequests(ctx context.Context, req *pb.ListPRsRequest) (*pb.ListPRsResponse, error) {
-	prs, total, err := s.PRs.ListPullRequests(ctx, req.GetOwner(), req.GetRepo(), req.State, req.Author, req.Assignee, req.Label, req.Base, int(req.GetPage()), int(req.GetPerPage()))
+	prs, total, err := s.PRs.ListPullRequests(ctx, req.GetOwner(), req.Repo, req.State, req.Author, req.Assignee, req.Label, req.Base, int(req.GetPage()), int(req.GetPerPage()))
 	if err != nil {
 		return nil, err
 	}
@@ -1213,4 +1240,3 @@ func (s *GytServer) SearchIssues(ctx context.Context, req *pb.SearchIssuesReques
 	}
 	return resp, nil
 }
-

@@ -60,7 +60,18 @@ func (s *IssueService) CreateIssue(ctx context.Context, callerID uint, owner, re
 	}
 	s.attachAssignees(issue.ID, assignees)
 	s.attachLabels(issue.ID, r.ID, labels)
-	return s.loadIssue(r.ID, num)
+	loaded, err := s.loadIssue(r.ID, num)
+	if err != nil {
+		return nil, err
+	}
+	DispatchWebhook(r.ID, "issues", map[string]interface{}{
+		"action":     "opened",
+		"number":     loaded.Number,
+		"title":      loaded.Title,
+		"state":      loaded.State,
+		"repository": owner + "/" + repo,
+	})
+	return loaded, nil
 }
 
 func (s *IssueService) GetIssue(ctx context.Context, owner, repo string, number int) (*models.Issue, error) {
@@ -71,19 +82,40 @@ func (s *IssueService) GetIssue(ctx context.Context, owner, repo string, number 
 	return s.loadIssue(r.ID, number)
 }
 
-func (s *IssueService) ListIssues(ctx context.Context, owner, repo string, state, label, assignee, author *string, page, perPage int) ([]models.Issue, int64, error) {
-	r, err := resolveRepo(ctx, owner, repo)
-	if err != nil {
-		return nil, 0, err
-	}
+func (s *IssueService) ListIssues(ctx context.Context, owner string, repo *string, state, label, assignee, author *string, page, perPage int) ([]models.Issue, int64, error) {
 	if page < 1 {
 		page = 1
 	}
 	if perPage < 1 {
 		perPage = 30
 	}
-	q := orm.DB.Model(&models.Issue{}).Where("repository_id = ?", r.ID).
+
+	q := orm.DB.Model(&models.Issue{}).
 		Preload("Author").Preload("Assignees").Preload("Labels")
+
+	if repo != nil && *repo != "" {
+		// Filtrer par repo spécifique
+		r, err := resolveRepo(ctx, owner, *repo)
+		if err != nil {
+			return nil, 0, err
+		}
+		q = q.Where("repository_id = ?", r.ID)
+	} else {
+		// Tous les repos du owner
+		rs := &RepoService{}
+		ownerID, ownerType, _, err := rs.resolveOwner(ctx, owner)
+		if err != nil {
+			return nil, 0, err
+		}
+		var repoIDs []uint
+		orm.DB.Model(&models.Repository{}).
+			Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).
+			Pluck("id", &repoIDs)
+		if len(repoIDs) == 0 {
+			return []models.Issue{}, 0, nil
+		}
+		q = q.Where("repository_id IN ?", repoIDs)
+	}
 	if state != nil && *state != "all" {
 		q = q.Where("state = ?", *state)
 	}
@@ -290,4 +322,3 @@ func (s *IssueService) attachLabels(issueID, repoID uint, names []string) {
 		}
 	}
 }
-

@@ -241,6 +241,7 @@ type CompareResponse {
   totalDeletions:  Int!
   filesChanged:    Int!
   commitsAhead:    Int!
+  patch:           String!
 }
 
 type FileHistoryResponse {
@@ -631,12 +632,12 @@ type Query {
 
   # Issues
   getIssue(owner: String!, repo: String!, number: Int!): Issue!
-  listIssues(owner: String!, repo: String!, state: String, label: String, assignee: String, author: String, page: Int, perPage: Int): ListIssuesResponse!
+  listIssues(owner: String!, repo: String, state: String, label: String, assignee: String, author: String, page: Int, perPage: Int): ListIssuesResponse!
   listIssueComments(owner: String!, repo: String!, number: Int!): ListIssueCommentsResponse!
 
   # Pull Requests
   getPullRequest(owner: String!, repo: String!, number: Int!): PullRequest!
-  listPullRequests(owner: String!, repo: String!, state: String, author: String, assignee: String, label: String, base: String, page: Int, perPage: Int): ListPRsResponse!
+  listPullRequests(owner: String!, repo: String, state: String, author: String, assignee: String, label: String, base: String, page: Int, perPage: Int): ListPRsResponse!
   getPullRequestDiff(owner: String!, repo: String!, number: Int!): CompareResponse!
   listPRComments(owner: String!, repo: String!, number: Int!): ListPRCommentsResponse!
   listPRReviews(owner: String!, repo: String!, number: Int!): ListPRReviewsResponse!
@@ -677,6 +678,8 @@ type Mutation {
 
   # Repository Content
   setDefaultBranch(owner: String!, name: String!, branchName: String!): DefaultBranchResponse!
+  createBranch(owner: String!, name: String!, branchName: String!, source: String!): Branch!
+  deleteBranch(owner: String!, name: String!, branchName: String!): Boolean!
   createTag(input: CreateTagInput!): TagDetail!
   deleteTag(owner: String!, name: String!, tagName: String!): Boolean!
 

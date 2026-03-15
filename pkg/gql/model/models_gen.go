@@ -89,6 +89,7 @@ type CompareResponse struct {
 	TotalDeletions int         `json:"totalDeletions"`
 	FilesChanged   int         `json:"filesChanged"`
 	CommitsAhead   int         `json:"commitsAhead"`
+	Patch          string      `json:"patch"`
 }
 
 type CreateIssueInput struct {

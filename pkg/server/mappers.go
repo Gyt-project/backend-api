@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-
 // ─── Mappers ─────────────────────────────────────────────────────────────────
 
 func userToProto(u *models.User) *pb.UserResponse {
@@ -114,6 +113,7 @@ func compareToProto(r *ssgrpc.CompareResponse) *pb.CompareResponse {
 		TotalDeletions: r.GetTotalDeletions(),
 		FilesChanged:   r.GetFilesChanged(),
 		CommitsAhead:   r.GetCommitsAhead(),
+		Patch:          r.GetPatch(),
 	}
 	for _, c := range r.GetCommits() {
 		resp.Commits = append(resp.Commits, commitToProto(c))
@@ -286,4 +286,3 @@ func stargazersToProto(users []models.User, total int64) *pb.ListStargazersRespo
 func fmtUint64(id uint64) string {
 	return fmt.Sprintf("%d", id)
 }
-

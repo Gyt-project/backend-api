@@ -10,10 +10,9 @@ type Webhook struct {
 	RepositoryID *uint  `gorm:"index"`
 	URL          string `gorm:"not null"`
 	Secret       string `gorm:"default:''"`
-	ContentType  string `gorm:"type:varchar(10);default:'json'"` // "json" | "form"
+	ContentType  string `gorm:"type:varchar(50);default:'json'"` // "json" | "form"
 	Active       bool   `gorm:"default:true"`
 	Events       string `gorm:"type:text;default:'[]'"` // JSON array de strings
 
 	Repository *Repository `gorm:"foreignKey:RepositoryID"`
 }
-
