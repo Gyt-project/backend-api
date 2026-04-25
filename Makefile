@@ -23,12 +23,14 @@ help:
 ## 1. Régénère backend_api.pb.go + backend_api_grpc.pb.go depuis backend_api.proto
 proto:
 	@echo "▶ [proto] Régénération des stubs gRPC..."
-	protoc \
+	$(TEMP)/protoc/bin/protoc \
 		--go_out=pkg/grpc \
 		--go_opt=paths=source_relative \
+		--plugin=protoc-gen-go=$(GOPATH)/bin/protoc-gen-go-new.exe \
 		--go-grpc_out=pkg/grpc \
 		--go-grpc_opt=paths=source_relative \
 		-I pkg/grpc \
+		-I "C:/Users/Mkarten/AppData/Local/JetBrains/GoLand2022.2/protoeditor" \
 		pkg/grpc/backend_api.proto
 	@echo "✅ gRPC stubs régénérés dans pkg/grpc/"
 

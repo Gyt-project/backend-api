@@ -2,6 +2,7 @@ package gql
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 
@@ -34,6 +35,17 @@ func NewHandler(client pb.GytServiceClient, branchProt *service.BranchProtection
 		Resolvers: &Resolver{Client: client, BranchProt: branchProt, PRSvc: prSvc},
 	}))
 	srv.SetErrorPresenter(grpcErrorPresenter)
+	srv.AroundResponses(func(ctx context.Context, next graphql.ResponseHandler) *graphql.Response {
+		resp := next(ctx)
+		if len(resp.Errors) > 0 {
+			oc := graphql.GetOperationContext(ctx)
+			log.Printf("[gql:error] op=%q errors=%d", oc.OperationName, len(resp.Errors))
+			for _, e := range resp.Errors {
+				log.Printf("[gql:error]   path=%v message=%s", e.Path, e.Message)
+			}
+		}
+		return resp
+	})
 	return srv
 }
 

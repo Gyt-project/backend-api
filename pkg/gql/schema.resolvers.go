@@ -642,26 +642,24 @@ func (r *mutationResolver) CreatePRReview(ctx context.Context, input model.Creat
 
 // RequestReview is the resolver for the requestReview field.
 func (r *mutationResolver) RequestReview(ctx context.Context, owner string, repo string, number int, username string) (bool, error) {
-	if r.PRSvc == nil {
-		return false, grpcstatus.Error(codes.Unimplemented, "review requests not available via gateway")
-	}
-	callerID, err := extractCallerID(ctx)
-	if err != nil {
-		return false, err
-	}
-	return true, r.PRSvc.RequestReview(ctx, callerID, owner, repo, number, username)
+	_, err := r.Client.RequestReview(grpcCtx(ctx), &pb.RequestReviewRequest{
+		Owner:    owner,
+		Repo:     repo,
+		Number:   int32(number),
+		Username: username,
+	})
+	return err == nil, err
 }
 
 // RemoveReviewRequest is the resolver for the removeReviewRequest field.
 func (r *mutationResolver) RemoveReviewRequest(ctx context.Context, owner string, repo string, number int, username string) (bool, error) {
-	if r.PRSvc == nil {
-		return false, grpcstatus.Error(codes.Unimplemented, "review requests not available via gateway")
-	}
-	callerID, err := extractCallerID(ctx)
-	if err != nil {
-		return false, err
-	}
-	return true, r.PRSvc.RemoveReviewRequest(ctx, callerID, owner, repo, number, username)
+	_, err := r.Client.RemoveReviewRequest(grpcCtx(ctx), &pb.RemoveReviewRequestRequest{
+		Owner:    owner,
+		Repo:     repo,
+		Number:   int32(number),
+		Username: username,
+	})
+	return err == nil, err
 }
 
 // DismissReview is the resolver for the dismissReview field.
@@ -1143,7 +1141,7 @@ func (r *queryResolver) ListCollaborators(ctx context.Context, owner string, nam
 	if err != nil {
 		return nil, err
 	}
-	out := &model.ListCollaboratorsResponse{}
+	out := &model.ListCollaboratorsResponse{Collaborators: make([]*model.Collaborator, 0, len(resp.GetCollaborators()))}
 	for _, c := range resp.GetCollaborators() {
 		out.Collaborators = append(out.Collaborators, pbCollaboratorToModel(c))
 	}
@@ -1259,7 +1257,7 @@ func (r *queryResolver) ListLabels(ctx context.Context, owner string, repo strin
 	if err != nil {
 		return nil, err
 	}
-	out := &model.ListLabelsResponse{}
+	out := &model.ListLabelsResponse{Labels: make([]*model.Label, 0, len(resp.GetLabels()))}
 	for _, l := range resp.GetLabels() {
 		out.Labels = append(out.Labels, pbLabelToModel(l))
 	}
@@ -1374,7 +1372,7 @@ func (r *queryResolver) ListPRComments(ctx context.Context, owner string, repo s
 	if err != nil {
 		return nil, err
 	}
-	out := &model.ListPRCommentsResponse{}
+	out := &model.ListPRCommentsResponse{Comments: make([]*model.PRComment, 0, len(resp.GetComments()))}
 	for _, c := range resp.GetComments() {
 		out.Comments = append(out.Comments, pbPRCommentToModel(c))
 	}
@@ -1387,7 +1385,7 @@ func (r *queryResolver) ListPRReviews(ctx context.Context, owner string, repo st
 	if err != nil {
 		return nil, err
 	}
-	out := &model.ListPRReviewsResponse{}
+	out := &model.ListPRReviewsResponse{Reviews: make([]*model.PRReview, 0, len(resp.GetReviews()))}
 	for _, rv := range resp.GetReviews() {
 		out.Reviews = append(out.Reviews, pbPRReviewToModel(rv))
 	}
@@ -1396,21 +1394,21 @@ func (r *queryResolver) ListPRReviews(ctx context.Context, owner string, repo st
 
 // ListReviewRequests is the resolver for the listReviewRequests field.
 func (r *queryResolver) ListReviewRequests(ctx context.Context, owner string, repo string, number int) (*model.ListReviewRequestsResponse, error) {
-	if r.PRSvc == nil {
-		// Return empty list when service is not available (gateway mode)
-		return &model.ListReviewRequestsResponse{Requests: []*model.ReviewRequest{}}, nil
-	}
-	requests, err := r.PRSvc.ListReviewRequests(ctx, owner, repo, number)
+	resp, err := r.Client.ListReviewRequests(grpcCtx(ctx), &pb.ListReviewRequestsRequest{
+		Owner:  owner,
+		Repo:   repo,
+		Number: int32(number),
+	})
 	if err != nil {
 		return nil, err
 	}
-	var modelRequests []*model.ReviewRequest
-	for _, req := range requests {
+	modelRequests := make([]*model.ReviewRequest, 0, len(resp.Requests))
+	for _, req := range resp.Requests {
 		modelRequests = append(modelRequests, &model.ReviewRequest{
-			ID:          fmt.Sprintf("%d", req.ID),
-			Reviewer:    dbUserToModel(&req.Reviewer),
-			RequestedBy: dbUserToModel(&req.RequestedBy),
-			CreatedAt:   req.CreatedAt,
+			ID:          fmt.Sprintf("%d", req.Id),
+			Reviewer:    pbUserToModel(req.Reviewer),
+			RequestedBy: pbUserToModel(req.RequestedBy),
+			CreatedAt:   req.CreatedAt.AsTime(),
 		})
 	}
 	return &model.ListReviewRequestsResponse{Requests: modelRequests}, nil

@@ -123,6 +123,9 @@ service GytService {
   rpc DeletePRComment(DeletePRCommentRequest) returns (google.protobuf.Empty);
   rpc CreatePRReview(CreatePRReviewRequest) returns (PRReviewResponse);
   rpc ListPRReviews(ListPRReviewsRequest) returns (ListPRReviewsResponse);
+  rpc RequestReview(RequestReviewRequest) returns (google.protobuf.Empty);
+  rpc RemoveReviewRequest(RemoveReviewRequestRequest) returns (google.protobuf.Empty);
+  rpc ListReviewRequests(ListReviewRequestsRequest) returns (ListReviewRequestsResponse);
   rpc AddPRLabel(AddPRLabelRequest) returns (google.protobuf.Empty);
   rpc RemovePRLabel(RemovePRLabelRequest) returns (google.protobuf.Empty);
   rpc AddPRAssignee(AddPRAssigneeRequest) returns (google.protobuf.Empty);
@@ -1087,6 +1090,37 @@ message ListPRReviewsRequest {
 
 message ListPRReviewsResponse {
   repeated PRReviewResponse reviews = 1;
+}
+
+message RequestReviewRequest {
+  string owner    = 1;
+  string repo     = 2;
+  int32  number   = 3;
+  string username = 4;
+}
+
+message RemoveReviewRequestRequest {
+  string owner    = 1;
+  string repo     = 2;
+  int32  number   = 3;
+  string username = 4;
+}
+
+message ListReviewRequestsRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message ReviewRequestResponse {
+  uint64 id                                = 1;
+  UserResponse reviewer                    = 2;
+  UserResponse requested_by                = 3;
+  google.protobuf.Timestamp created_at     = 4;
+}
+
+message ListReviewRequestsResponse {
+  repeated ReviewRequestResponse requests = 1;
 }
 
 message AddPRLabelRequest {

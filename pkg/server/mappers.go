@@ -258,6 +258,18 @@ func prReviewToProto(r *models.PRReview) *pb.PRReviewResponse {
 	}
 }
 
+func reviewRequestToProto(r *models.ReviewRequest) *pb.ReviewRequestResponse {
+	if r == nil {
+		return nil
+	}
+	return &pb.ReviewRequestResponse{
+		Id:          uint64(r.ID),
+		Reviewer:    userToProto(&r.Reviewer),
+		RequestedBy: userToProto(&r.RequestedBy),
+		CreatedAt:   timestamppb.New(r.CreatedAt),
+	}
+}
+
 func webhookToProto(w *models.Webhook) *pb.WebhookResponse {
 	if w == nil {
 		return nil

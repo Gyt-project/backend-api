@@ -14,4 +14,4 @@ resolver:
 autobind: []
 models:
   Time:
-    model: github.com/99designs/gqlgen/graphql.Time
+    model: github.com/Gyt-project/backend-api/pkg/gql/scalars.Time

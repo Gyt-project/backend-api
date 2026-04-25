@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -17,6 +18,23 @@ import (
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 )
+
+// grpcDebugInterceptor logs every gRPC call: method, response type, and any error.
+// This runs after the handler returns, before gRPC marshals the response — so if
+// the marshal step panics, the log shows the last method that returned successfully.
+func grpcDebugInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	resp, err := handler(ctx, req)
+	if err != nil {
+		log.Printf("[grpc:error] method=%s req=%T err=%v", info.FullMethod, req, err)
+	} else {
+		log.Printf("[grpc:response] method=%s req=%T resp=%T", info.FullMethod, req, resp)
+		if resp == nil {
+			log.Printf("[grpc:warn] method=%s returned nil response", info.FullMethod)
+		}
+	}
+	_ = fmt.Sprintf // keep fmt import used
+	return resp, err
+}
 
 func main() {
 	p, err := os.Getwd()
@@ -106,7 +124,10 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.UnaryAuthInterceptor),
+		grpc.ChainUnaryInterceptor(
+			auth.UnaryAuthInterceptor,
+			grpcDebugInterceptor,
+		),
 	)
 
 	pb.RegisterGytServiceServer(grpcServer, server.NewGytServer())

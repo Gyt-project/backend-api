@@ -997,7 +997,7 @@ func (s *GytServer) CreatePullRequest(ctx context.Context, req *pb.CreatePRReque
 }
 
 func (s *GytServer) GetPullRequest(ctx context.Context, req *pb.GetPRRequest) (*pb.PullRequestResponse, error) {
-	pr, err := s.PRs.GetPullRequest(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	_, pr, err := s.PRs.GetPullRequestBase(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
 	if err != nil {
 		return nil, err
 	}
@@ -1065,7 +1065,7 @@ func (s *GytServer) ReopenPullRequest(ctx context.Context, req *pb.ReopenPRReque
 }
 
 func (s *GytServer) GetPullRequestDiff(ctx context.Context, req *pb.GetPRDiffRequest) (*pb.CompareResponse, error) {
-	pr, err := s.PRs.GetPullRequest(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	_, pr, err := s.PRs.GetPullRequestBase(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
 	if err != nil {
 		return nil, err
 	}
@@ -1146,6 +1146,34 @@ func (s *GytServer) ListPRReviews(ctx context.Context, req *pb.ListPRReviewsRequ
 	resp := &pb.ListPRReviewsResponse{}
 	for i := range reviews {
 		resp.Reviews = append(resp.Reviews, prReviewToProto(&reviews[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) RequestReview(ctx context.Context, req *pb.RequestReviewRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.PRs.RequestReview(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+func (s *GytServer) RemoveReviewRequest(ctx context.Context, req *pb.RemoveReviewRequestRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.PRs.RemoveReviewRequest(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+func (s *GytServer) ListReviewRequests(ctx context.Context, req *pb.ListReviewRequestsRequest) (*pb.ListReviewRequestsResponse, error) {
+	requests, err := s.PRs.ListReviewRequests(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListReviewRequestsResponse{}
+	for i := range requests {
+		resp.Requests = append(resp.Requests, reviewRequestToProto(&requests[i]))
 	}
 	return resp, nil
 }

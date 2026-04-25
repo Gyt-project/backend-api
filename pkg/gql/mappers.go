@@ -209,9 +209,10 @@ func blobToBase64(b []byte) string {
 
 func pbListReposToModel(resp *pb.ListReposResponse) *model.ListReposResponse {
 	out := &model.ListReposResponse{
-		Total:   int(resp.GetTotal()),
-		Page:    int(resp.GetPage()),
-		PerPage: int(resp.GetPerPage()),
+		Total:        int(resp.GetTotal()),
+		Page:         int(resp.GetPage()),
+		PerPage:      int(resp.GetPerPage()),
+		Repositories: make([]*model.Repository, 0),
 	}
 	for _, r := range resp.GetRepositories() {
 		out.Repositories = append(out.Repositories, pbRepoToModel(r))
@@ -224,6 +225,7 @@ func pbListCommitsToModel(resp *pb.ListCommitsResponse) *model.ListCommitsRespon
 		Page:    int(resp.GetPage()),
 		PerPage: int(resp.GetPerPage()),
 		HasMore: resp.GetHasMore(),
+		Commits: make([]*model.Commit, 0),
 	}
 	for _, c := range resp.GetCommits() {
 		out.Commits = append(out.Commits, pbCommitToModel(c))
@@ -238,6 +240,8 @@ func pbCompareToModel(resp *pb.CompareResponse) *model.CompareResponse {
 		FilesChanged:   int(resp.GetFilesChanged()),
 		CommitsAhead:   int(resp.GetCommitsAhead()),
 		Patch:          resp.GetPatch(),
+		Commits:        make([]*model.Commit, 0),
+		Files:          make([]*model.FileDiff, 0),
 	}
 	for _, c := range resp.GetCommits() {
 		out.Commits = append(out.Commits, pbCommitToModel(c))
@@ -276,6 +280,8 @@ func pbIssueToModel(i *pb.IssueResponse) *model.Issue {
 		CommentCount: int(i.GetCommentCount()),
 		CreatedAt:    i.GetCreatedAt().AsTime(),
 		UpdatedAt:    i.GetUpdatedAt().AsTime(),
+		Assignees:    make([]*model.User, 0),
+		Labels:       make([]*model.Label, 0),
 	}
 	for _, u := range i.GetAssignees() {
 		out.Assignees = append(out.Assignees, pbUserToModel(u))
@@ -326,6 +332,8 @@ func pbPRToModel(pr *pb.PullRequestResponse) *model.PullRequest {
 		ChangedFiles: int(pr.GetChangedFiles()),
 		CreatedAt:    pr.GetCreatedAt().AsTime(),
 		UpdatedAt:    pr.GetUpdatedAt().AsTime(),
+		Assignees:    make([]*model.User, 0),
+		Labels:       make([]*model.Label, 0),
 	}
 	for _, u := range pr.GetAssignees() {
 		out.Assignees = append(out.Assignees, pbUserToModel(u))
