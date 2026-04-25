@@ -6,6 +6,7 @@ import (
 
 	"github.com/Gyt-project/backend-api/pkg/gql/model"
 	pb "github.com/Gyt-project/backend-api/pkg/grpc"
+	"github.com/Gyt-project/backend-api/pkg/models"
 )
 
 // ─── Proto → Model mappers ────────────────────────────────────────────────────
@@ -371,6 +372,59 @@ func pbPRReviewToModel(r *pb.PRReviewResponse) *model.PRReview {
 		State:       r.GetState(),
 		Body:        r.GetBody(),
 		SubmittedAt: r.GetSubmittedAt().AsTime(),
+	}
+}
+
+// ─── ORM → Model mappers ─────────────────────────────────────────────────────
+
+func prReviewToModel(r *models.PRReview) *model.PRReview {
+	if r == nil {
+		return nil
+	}
+	out := &model.PRReview{
+		ID:            fmt.Sprintf("%d", r.ID),
+		State:         r.State,
+		Body:          r.Body,
+		SubmittedAt:   r.CreatedAt,
+		Dismissed:     r.Dismissed,
+		DismissedAt:   r.DismissedAt,
+		DismissReason: r.DismissReason,
+	}
+	if r.Reviewer.ID != 0 {
+		out.Reviewer = dbUserToModel(&r.Reviewer)
+	}
+	return out
+}
+
+func branchProtectionToModel(rule *models.BranchProtection) *model.BranchProtection {
+	if rule == nil {
+		return nil
+	}
+	return &model.BranchProtection{
+		ID:                  fmt.Sprintf("%d", rule.ID),
+		Pattern:             rule.Pattern,
+		RequirePullRequest:  rule.RequirePullRequest,
+		RequiredApprovals:   rule.RequiredApprovals,
+		DismissStaleReviews: rule.DismissStaleReviews,
+		BlockForcePush:      rule.BlockForcePush,
+		CreatedAt:           rule.CreatedAt,
+		UpdatedAt:           rule.UpdatedAt,
+	}
+}
+
+func dbUserToModel(u *models.User) *model.User {
+	if u == nil {
+		return nil
+	}
+	return &model.User{
+		UUID:        u.UUID.String(),
+		Username:    u.Username,
+		Email:       u.Email,
+		DisplayName: u.DisplayName,
+		Bio:         u.Bio,
+		AvatarURL:   u.AvatarURL,
+		IsAdmin:     u.IsAdmin,
+		CreatedAt:   u.CreatedAt,
 	}
 }
 

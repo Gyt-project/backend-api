@@ -12,6 +12,8 @@ import (
 
 	"github.com/Gyt-project/backend-api/pkg/gql/model"
 	pb "github.com/Gyt-project/backend-api/pkg/grpc"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -640,6 +642,9 @@ func (r *mutationResolver) CreatePRReview(ctx context.Context, input model.Creat
 
 // RequestReview is the resolver for the requestReview field.
 func (r *mutationResolver) RequestReview(ctx context.Context, owner string, repo string, number int, username string) (bool, error) {
+	if r.PRSvc == nil {
+		return false, grpcstatus.Error(codes.Unimplemented, "review requests not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return false, err
@@ -649,6 +654,9 @@ func (r *mutationResolver) RequestReview(ctx context.Context, owner string, repo
 
 // RemoveReviewRequest is the resolver for the removeReviewRequest field.
 func (r *mutationResolver) RemoveReviewRequest(ctx context.Context, owner string, repo string, number int, username string) (bool, error) {
+	if r.PRSvc == nil {
+		return false, grpcstatus.Error(codes.Unimplemented, "review requests not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return false, err
@@ -658,6 +666,9 @@ func (r *mutationResolver) RemoveReviewRequest(ctx context.Context, owner string
 
 // DismissReview is the resolver for the dismissReview field.
 func (r *mutationResolver) DismissReview(ctx context.Context, owner string, repo string, reviewID string, reason *string) (*model.PRReview, error) {
+	if r.PRSvc == nil {
+		return nil, grpcstatus.Error(codes.Unimplemented, "dismiss review not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return nil, err
@@ -675,6 +686,9 @@ func (r *mutationResolver) DismissReview(ctx context.Context, owner string, repo
 
 // DismissStaleReviews is the resolver for the dismissStaleReviews field.
 func (r *mutationResolver) DismissStaleReviews(ctx context.Context, owner string, repo string, number int) (bool, error) {
+	if r.PRSvc == nil {
+		return false, grpcstatus.Error(codes.Unimplemented, "dismiss stale reviews not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return false, err
@@ -684,6 +698,9 @@ func (r *mutationResolver) DismissStaleReviews(ctx context.Context, owner string
 
 // CreateBranchProtection is the resolver for the createBranchProtection field.
 func (r *mutationResolver) CreateBranchProtection(ctx context.Context, input model.CreateBranchProtectionInput) (*model.BranchProtection, error) {
+	if r.BranchProt == nil {
+		return nil, grpcstatus.Error(codes.Unimplemented, "branch protection not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return nil, err
@@ -713,6 +730,9 @@ func (r *mutationResolver) CreateBranchProtection(ctx context.Context, input mod
 
 // UpdateBranchProtection is the resolver for the updateBranchProtection field.
 func (r *mutationResolver) UpdateBranchProtection(ctx context.Context, input model.UpdateBranchProtectionInput) (*model.BranchProtection, error) {
+	if r.BranchProt == nil {
+		return nil, grpcstatus.Error(codes.Unimplemented, "branch protection not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return nil, err
@@ -726,6 +746,9 @@ func (r *mutationResolver) UpdateBranchProtection(ctx context.Context, input mod
 
 // DeleteBranchProtection is the resolver for the deleteBranchProtection field.
 func (r *mutationResolver) DeleteBranchProtection(ctx context.Context, owner string, repo string, id string) (bool, error) {
+	if r.BranchProt == nil {
+		return false, grpcstatus.Error(codes.Unimplemented, "branch protection not available via gateway")
+	}
 	callerID, err := extractCallerID(ctx)
 	if err != nil {
 		return false, err
@@ -1373,7 +1396,24 @@ func (r *queryResolver) ListPRReviews(ctx context.Context, owner string, repo st
 
 // ListReviewRequests is the resolver for the listReviewRequests field.
 func (r *queryResolver) ListReviewRequests(ctx context.Context, owner string, repo string, number int) (*model.ListReviewRequestsResponse, error) {
-	panic(fmt.Errorf("not implemented: ListReviewRequests - listReviewRequests"))
+	if r.PRSvc == nil {
+		// Return empty list when service is not available (gateway mode)
+		return &model.ListReviewRequestsResponse{Requests: []*model.ReviewRequest{}}, nil
+	}
+	requests, err := r.PRSvc.ListReviewRequests(ctx, owner, repo, number)
+	if err != nil {
+		return nil, err
+	}
+	var modelRequests []*model.ReviewRequest
+	for _, req := range requests {
+		modelRequests = append(modelRequests, &model.ReviewRequest{
+			ID:          fmt.Sprintf("%d", req.ID),
+			Reviewer:    dbUserToModel(&req.Reviewer),
+			RequestedBy: dbUserToModel(&req.RequestedBy),
+			CreatedAt:   req.CreatedAt,
+		})
+	}
+	return &model.ListReviewRequestsResponse{Requests: modelRequests}, nil
 }
 
 // ListBranchProtections is the resolver for the listBranchProtections field.

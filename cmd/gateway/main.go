@@ -51,7 +51,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// GraphQL endpoint — wrappé par le middleware JWT
-	graphqlHandler := gql.AuthMiddleware(gql.NewHandler(grpcClient))
+	graphqlHandler := gql.AuthMiddleware(gql.NewHandler(grpcClient, nil, nil))
 	mux.Handle("/graphql", graphqlHandler)
 
 	// GraphQL Playground (dev uniquement — désactiver en production)

@@ -83,4 +83,4 @@ require (
 	modernc.org/sqlite v1.44.3 // indirect
 )
 
-replace github.com/Gyt-project/soft-serve => ../custom-soft-serve
+replace github.com/Gyt-project/soft-serve => ../soft-serve

@@ -60,6 +60,7 @@ func main() {
 		&models.PullRequest{},
 		&models.PRComment{},
 		&models.PRReview{},
+		&models.ReviewRequest{},
 		// webhooks
 		&models.Webhook{},
 	)
