@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Gyt-project/backend-api/internal/cache"
 	"github.com/Gyt-project/backend-api/internal/gitClient"
 	"github.com/Gyt-project/backend-api/internal/orm"
 	"github.com/Gyt-project/backend-api/pkg/models"
@@ -345,6 +346,18 @@ func (s *PRService) MergePullRequest(ctx context.Context, callerID uint, owner, 
 	}).Error; err != nil {
 		return false, "", "", status.Errorf(codes.Internal, "failed to update PR state: %v", err)
 	}
+	// Invalidate branch list, stats, and all content cached under the base branch,
+	// since a merge creates a new commit on it. Also clear default-ref (no-ref) caches.
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:branches:%s/%s", owner, repo),
+		fmt.Sprintf("gyt:stats:%s/%s", owner, repo),
+	)
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:commits:%s/%s:%s:*", owner, repo, pr.BaseBranch))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:commits:%s/%s::*", owner, repo))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:tree:%s/%s:%s:*", owner, repo, pr.BaseBranch))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:blob:%s/%s:%s:*", owner, repo, pr.BaseBranch))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:tree:%s/%s::*", owner, repo))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:blob:%s/%s::*", owner, repo))
 	return true, sha, title, nil
 }
 

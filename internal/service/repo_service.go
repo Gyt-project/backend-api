@@ -2,16 +2,20 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/Gyt-project/backend-api/internal/cache"
 	"github.com/Gyt-project/backend-api/internal/gitClient"
 	"github.com/Gyt-project/backend-api/internal/orm"
 	"github.com/Gyt-project/backend-api/pkg/models"
 	ssgrpc "github.com/Gyt-project/soft-serve/pkg/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"gorm.io/gorm"
 )
 
@@ -194,14 +198,29 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 	return repo, nil
 }
 
-// GetRepository retourne un dépôt et vérifie les droits d'accès
+// GetRepository retourne un dépôt et vérifie les droits d'accès.
+// The repository metadata is cached for 5 minutes; access checks always run live.
 func (s *RepoService) GetRepository(ctx context.Context, callerID uint, ownerName, repoName string) (*models.Repository, error) {
+	cacheKey := fmt.Sprintf("gyt:repo:%s/%s", ownerName, repoName)
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var repo models.Repository
+		if err := json.Unmarshal(data, &repo); err == nil {
+			if !s.canAccessRepo(ctx, callerID, &repo) {
+				return nil, status.Error(codes.PermissionDenied, "access denied")
+			}
+			return &repo, nil
+		}
+	}
+
 	repo, err := s.getRepoByOwnerAndName(ctx, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
 	if !s.canAccessRepo(ctx, callerID, repo) {
 		return nil, status.Error(codes.PermissionDenied, "access denied")
+	}
+	if data, err := json.Marshal(repo); err == nil {
+		cache.Set(ctx, cacheKey, data, 5*time.Minute)
 	}
 	return repo, nil
 }
@@ -336,6 +355,8 @@ func (s *RepoService) UpdateRepository(ctx context.Context, callerID uint, owner
 			BranchName: *defaultBranch,
 		})
 	}
+	// Invalidate cached metadata so subsequent reads reflect the update.
+	cache.Delete(ctx, fmt.Sprintf("gyt:repo:%s/%s", ownerName, repoName))
 	return repo, nil
 }
 
@@ -354,6 +375,10 @@ func (s *RepoService) DeleteRepository(ctx context.Context, callerID uint, owner
 
 	// Supprimer collaborators
 	orm.DB.Where("repository_id = ?", repo.ID).Delete(&models.RepoCollaborator{})
+
+	// Invalidate all cache entries for this repository.
+	cache.Delete(ctx, fmt.Sprintf("gyt:repo:%s/%s", ownerName, repoName))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:*:%s/%s:*", ownerName, repoName))
 
 	return orm.DB.Delete(repo).Error
 }
@@ -387,6 +412,9 @@ func (s *RepoService) RenameRepository(ctx context.Context, callerID uint, owner
 	}).Error; err != nil {
 		return nil, status.Error(codes.Internal, "failed to rename repository in database")
 	}
+	// Invalidate all cache entries stored under the old name.
+	cache.Delete(ctx, fmt.Sprintf("gyt:repo:%s/%s", ownerName, oldName))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:*:%s/%s:*", ownerName, oldName))
 	return repo, nil
 }
 
@@ -414,12 +442,31 @@ func isEmptyRepoErr(err error) bool {
 	return false
 }
 
-// GetRepositoryTree retourne l'arbre de fichiers d'un dépôt
+// GetRepositoryTree retourne l'arbre de fichiers d'un dépôt.
+// Results are cached per (owner, repo, ref, path) for 3 minutes.
 func (s *RepoService) GetRepositoryTree(ctx context.Context, callerID uint, ownerName, repoName string, ref, path *string) (*ssgrpc.GetTreeResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	refStr := ""
+	if ref != nil {
+		refStr = *ref
+	}
+	pathStr := ""
+	if path != nil {
+		pathStr = *path
+	}
+	cacheKey := fmt.Sprintf("gyt:tree:%s/%s:%s:%s", ownerName, repoName, refStr, pathStr)
+
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.GetTreeResponse
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
 	req := &ssgrpc.GetTreeRequest{RepoName: repo.GitRepoName}
 	if ref != nil {
 		req.Ref = ref
@@ -434,34 +481,72 @@ func (s *RepoService) GetRepositoryTree(ctx context.Context, callerID uint, owne
 		}
 		return nil, err
 	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 3*time.Minute)
+	}
 	return res, nil
 }
 
-// GetFileBlob retourne le contenu d'un fichier
+// GetFileBlob retourne le contenu d'un fichier.
+// Results are cached per (owner, repo, ref, path) for 5 minutes.
 func (s *RepoService) GetFileBlob(ctx context.Context, callerID uint, ownerName, repoName, path string, ref *string) (*ssgrpc.GetBlobResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	refStr := ""
+	if ref != nil {
+		refStr = *ref
+	}
+	cacheKey := fmt.Sprintf("gyt:blob:%s/%s:%s:%s", ownerName, repoName, refStr, path)
+
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.GetBlobResponse
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
 	req := &ssgrpc.GetBlobRequest{RepoName: repo.GitRepoName, Path: path}
 	if ref != nil {
 		req.Ref = ref
 	}
-	return gitClient.GitClient.GetBlob(ctx, req)
+	res, err := gitClient.GitClient.GetBlob(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 5*time.Minute)
+	}
+	return res, nil
 }
 
-// ListBranches retourne les branches d'un dépôt
+// ListBranches retourne les branches d'un dépôt.
+// Results are cached per (owner, repo) for 2 minutes.
 func (s *RepoService) ListBranches(ctx context.Context, callerID uint, ownerName, repoName string) (*ssgrpc.GetBranchesResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	cacheKey := fmt.Sprintf("gyt:branches:%s/%s", ownerName, repoName)
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.GetBranchesResponse
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
 	res, err := gitClient.GitClient.GetBranches(ctx, &ssgrpc.GetBranchesRequest{RepoName: repo.GitRepoName})
 	if err != nil {
 		if isEmptyRepoErr(err) {
 			return &ssgrpc.GetBranchesResponse{}, nil
 		}
 		return nil, err
+	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 2*time.Minute)
 	}
 	return res, nil
 }
@@ -475,11 +560,20 @@ func (s *RepoService) CreateBranch(ctx context.Context, callerID uint, ownerName
 	if !s.canWriteRepo(ctx, callerID, repo) {
 		return nil, status.Error(codes.PermissionDenied, "write access required")
 	}
-	return gitClient.GitClient.CreateBranch(ctx, &ssgrpc.CreateBranchRequest{
+	branch, err := gitClient.GitClient.CreateBranch(ctx, &ssgrpc.CreateBranchRequest{
 		RepoName:   repo.GitRepoName,
 		BranchName: branchName,
 		Source:     source,
 	})
+	if err != nil {
+		return nil, err
+	}
+	// Invalidate branch list and stats (branch count changes).
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:branches:%s/%s", ownerName, repoName),
+		fmt.Sprintf("gyt:stats:%s/%s", ownerName, repoName),
+	)
+	return branch, nil
 }
 
 // DeleteBranch supprime une branche dans un dépôt
@@ -491,10 +585,21 @@ func (s *RepoService) DeleteBranch(ctx context.Context, callerID uint, ownerName
 	if !s.canWriteRepo(ctx, callerID, repo) {
 		return status.Error(codes.PermissionDenied, "write access required")
 	}
-	return gitClient.GitClient.DeleteBranch(ctx, &ssgrpc.DeleteBranchRequest{
+	if err := gitClient.GitClient.DeleteBranch(ctx, &ssgrpc.DeleteBranchRequest{
 		RepoName:   repo.GitRepoName,
 		BranchName: branchName,
-	})
+	}); err != nil {
+		return err
+	}
+	// Invalidate branch list, stats, and all content cached under this branch ref.
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:branches:%s/%s", ownerName, repoName),
+		fmt.Sprintf("gyt:stats:%s/%s", ownerName, repoName),
+	)
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:commits:%s/%s:%s:*", ownerName, repoName, branchName))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:tree:%s/%s:%s:*", ownerName, repoName, branchName))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:blob:%s/%s:%s:*", ownerName, repoName, branchName))
+	return nil
 }
 
 // GetDefaultBranch retourne la branche par défaut d'un dépôt
@@ -531,21 +636,42 @@ func (s *RepoService) SetDefaultBranch(ctx context.Context, callerID uint, owner
 		return nil, err
 	}
 	orm.DB.Model(repo).Update("default_branch", branchName)
+	// Invalidate branch list (default flag changes) and default-ref commit/tree/blob caches.
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:branches:%s/%s", ownerName, repoName),
+		fmt.Sprintf("gyt:stats:%s/%s", ownerName, repoName),
+	)
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:commits:%s/%s::*", ownerName, repoName))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:tree:%s/%s::*", ownerName, repoName))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:blob:%s/%s::*", ownerName, repoName))
 	return res, nil
 }
 
-// ListTags retourne les tags d'un dépôt
+// ListTags retourne les tags d'un dépôt.
+// Results are cached per (owner, repo) for 5 minutes.
 func (s *RepoService) ListTags(ctx context.Context, callerID uint, ownerName, repoName string) (*ssgrpc.ListTagsResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	cacheKey := fmt.Sprintf("gyt:tags:%s/%s", ownerName, repoName)
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.ListTagsResponse
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
 	res, err := gitClient.GitClient.ListTags(ctx, &ssgrpc.ListTagsRequest{RepoName: repo.GitRepoName})
 	if err != nil {
 		if isEmptyRepoErr(err) {
 			return &ssgrpc.ListTagsResponse{}, nil
 		}
 		return nil, err
+	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 5*time.Minute)
 	}
 	return res, nil
 }
@@ -567,7 +693,16 @@ func (s *RepoService) CreateTag(ctx context.Context, callerID uint, ownerName, r
 	if message != nil {
 		req.Message = message
 	}
-	return gitClient.GitClient.CreateTag(ctx, req)
+	tag, err := gitClient.GitClient.CreateTag(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	// A new tag changes the tag list and repository stats.
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:tags:%s/%s", ownerName, repoName),
+		fmt.Sprintf("gyt:stats:%s/%s", ownerName, repoName),
+	)
+	return tag, nil
 }
 
 // DeleteTag supprime un tag
@@ -579,15 +714,36 @@ func (s *RepoService) DeleteTag(ctx context.Context, callerID uint, ownerName, r
 	if !s.canWriteRepo(ctx, callerID, repo) {
 		return status.Error(codes.PermissionDenied, "write access required")
 	}
-	return gitClient.GitClient.DeleteTag(ctx, &ssgrpc.DeleteTagRequest{RepoName: repo.GitRepoName, TagName: tagName})
+	if err := gitClient.GitClient.DeleteTag(ctx, &ssgrpc.DeleteTagRequest{RepoName: repo.GitRepoName, TagName: tagName}); err != nil {
+		return err
+	}
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:tags:%s/%s", ownerName, repoName),
+		fmt.Sprintf("gyt:stats:%s/%s", ownerName, repoName),
+	)
+	return nil
 }
 
-// ListCommits retourne les commits d'un dépôt
+// ListCommits retourne les commits d'un dépôt.
+// Results are cached per (owner, repo, ref, page, limit) for 2 minutes.
 func (s *RepoService) ListCommits(ctx context.Context, callerID uint, ownerName, repoName string, ref *string, limit, page int32) (*ssgrpc.ListCommitsResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	refStr := ""
+	if ref != nil {
+		refStr = *ref
+	}
+	cacheKey := fmt.Sprintf("gyt:commits:%s/%s:%s:%d:%d", ownerName, repoName, refStr, page, limit)
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.ListCommitsResponse
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
 	req := &ssgrpc.ListCommitsRequest{RepoName: repo.GitRepoName}
 	if ref != nil {
 		req.Ref = ref
@@ -601,30 +757,63 @@ func (s *RepoService) ListCommits(ctx context.Context, callerID uint, ownerName,
 		}
 		return nil, err
 	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 2*time.Minute)
+	}
 	return res, nil
 }
 
-// GetCommit retourne le détail d'un commit
+// GetCommit retourne le détail d'un commit.
+// Commits are immutable once created; results are cached by SHA for 30 minutes.
 func (s *RepoService) GetCommit(ctx context.Context, callerID uint, ownerName, repoName, sha string) (*ssgrpc.CommitDetail, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
-	return gitClient.GitClient.GetCommit(ctx, &ssgrpc.GetCommitRequest{RepoName: repo.GitRepoName, Sha: sha})
+
+	cacheKey := fmt.Sprintf("gyt:commit:%s/%s:%s", ownerName, repoName, sha)
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.CommitDetail
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
+	res, err := gitClient.GitClient.GetCommit(ctx, &ssgrpc.GetCommitRequest{RepoName: repo.GitRepoName, Sha: sha})
+	if err != nil {
+		return nil, err
+	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 30*time.Minute)
+	}
+	return res, nil
 }
 
-// GetRepositoryStats retourne les statistiques d'un dépôt
+// GetRepositoryStats retourne les statistiques d'un dépôt.
+// Results are cached per (owner, repo) for 3 minutes.
 func (s *RepoService) GetRepositoryStats(ctx context.Context, callerID uint, ownerName, repoName string) (*ssgrpc.RepositoryStatsResponse, error) {
 	repo, err := s.GetRepository(ctx, callerID, ownerName, repoName)
 	if err != nil {
 		return nil, err
 	}
+
+	cacheKey := fmt.Sprintf("gyt:stats:%s/%s", ownerName, repoName)
+	if data, _ := cache.Get(ctx, cacheKey); data != nil {
+		var resp ssgrpc.RepositoryStatsResponse
+		if err := proto.Unmarshal(data, &resp); err == nil {
+			return &resp, nil
+		}
+	}
+
 	res, err := gitClient.GitClient.GetRepositoryStats(ctx, &ssgrpc.GetRepositoryStatsRequest{RepoName: repo.GitRepoName})
 	if err != nil {
 		if isEmptyRepoErr(err) {
 			return &ssgrpc.RepositoryStatsResponse{}, nil
 		}
 		return nil, err
+	}
+	if data, err := proto.Marshal(res); err == nil {
+		cache.Set(ctx, cacheKey, data, 3*time.Minute)
 	}
 	return res, nil
 }

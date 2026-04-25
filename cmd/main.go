@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Gyt-project/backend-api/internal/auth"
+	"github.com/Gyt-project/backend-api/internal/cache"
 	"github.com/Gyt-project/backend-api/internal/gitClient"
 	"github.com/Gyt-project/backend-api/internal/orm"
 	pb "github.com/Gyt-project/backend-api/pkg/grpc"
@@ -86,6 +87,15 @@ func main() {
 		log.Fatalf("Failed to migrate models: %v", err)
 	}
 	log.Println("Database migrations applied")
+
+	// ── Redis cache ───────────────────────────────────────────────────────────
+	redisAddr := os.Getenv("REDIS_ADDR")
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	if err := cache.Init(redisAddr, redisPassword); err != nil {
+		log.Printf("Redis cache unavailable, running without cache: %v", err)
+	} else {
+		log.Println("Redis cache connected")
+	}
 
 	// ── Git server client ─────────────────────────────────────────────────────
 	CLIENT_ADDR := os.Getenv("GIT_SERVER_ADDR")
