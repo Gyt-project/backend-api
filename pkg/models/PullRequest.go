@@ -43,11 +43,11 @@ type PRComment struct {
 // PRReview représente une revue formelle sur une PR.
 type PRReview struct {
 	BaseModel
-	PullRequestID uint       `gorm:"not null;index"`
-	ReviewerID    uint       `gorm:"not null;index"`
-	State         string     `gorm:"type:varchar(20);not null"` // "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED"
-	Body          string     `gorm:"type:text;default:''"`
-	Dismissed     bool       `gorm:"default:false"`
+	PullRequestID uint   `gorm:"not null;index"`
+	ReviewerID    uint   `gorm:"not null;index"`
+	State         string `gorm:"type:varchar(20);not null"` // "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED"
+	Body          string `gorm:"type:text;default:''"`
+	Dismissed     bool   `gorm:"default:false"`
 	DismissedAt   *time.Time
 	DismissReason string `gorm:"type:text;default:''"`
 
@@ -66,4 +66,3 @@ type ReviewRequest struct {
 	Reviewer    User        `gorm:"foreignKey:ReviewerID"`
 	RequestedBy User        `gorm:"foreignKey:RequestedByID"`
 }
-
