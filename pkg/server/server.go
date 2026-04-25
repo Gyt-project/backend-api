@@ -997,7 +997,7 @@ func (s *GytServer) CreatePullRequest(ctx context.Context, req *pb.CreatePRReque
 }
 
 func (s *GytServer) GetPullRequest(ctx context.Context, req *pb.GetPRRequest) (*pb.PullRequestResponse, error) {
-	_, pr, err := s.PRs.GetPullRequestBase(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	pr, err := s.PRs.GetPullRequestFull(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
 	if err != nil {
 		return nil, err
 	}

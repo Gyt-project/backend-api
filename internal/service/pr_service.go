@@ -148,6 +148,14 @@ func (s *PRService) GetPullRequestBase(ctx context.Context, owner, repo string, 
 	return r, pr, nil
 }
 
+func (s *PRService) GetPullRequestFull(ctx context.Context, owner, repo string, number int) (*models.PullRequest, error) {
+	r, err := resolveRepo(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+	return s.loadPRFull(ctx, r.ID, number)
+}
+
 func (s *PRService) ListPullRequests(ctx context.Context, owner string, repo *string, state, author, assignee, label, base *string, page, perPage int) ([]models.PullRequest, int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
