@@ -3,10 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/Gyt-project/backend-api/internal/gitClient"
 	"github.com/Gyt-project/backend-api/internal/orm"
 	"github.com/Gyt-project/backend-api/pkg/models"
+	ssgrpc "github.com/Gyt-project/soft-serve/pkg/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -27,6 +30,7 @@ func (s *PRService) loadPR(repoID uint, number int) (*models.PullRequest, error)
 	err := orm.DB.Where("repository_id = ? AND number = ?", repoID, number).
 		Preload("Author").Preload("Assignees").Preload("Labels").
 		Preload("Comments.Author").Preload("Reviews.Reviewer").
+		Preload("ReviewRequests.Reviewer").Preload("ReviewRequests.RequestedBy").
 		First(&pr).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -186,19 +190,81 @@ func (s *PRService) MergePullRequest(ctx context.Context, callerID uint, owner, 
 	if pr.State != "open" {
 		return false, "", "", status.Error(codes.FailedPrecondition, "pull request is not open")
 	}
-	now := time.Now()
-	sha := pr.HeadSHA
-	if sha == "" {
-		sha = "merged"
+
+	// Check branch protection rules on the base branch.
+	bpSvc := &BranchProtectionService{}
+	rule := bpSvc.MatchingRule(r.ID, pr.BaseBranch)
+	if rule != nil {
+		if rule.RequirePullRequest {
+			// Count approved reviews (non-dismissed).
+			var approvedCount int64
+			orm.DB.Model(&models.PRReview{}).
+				Where("pull_request_id = ? AND state = 'APPROVED' AND dismissed = false", pr.ID).
+				Count(&approvedCount)
+			if int(approvedCount) < rule.RequiredApprovals {
+				return false, "", "", status.Errorf(codes.FailedPrecondition,
+					"branch protection requires at least %d approved review(s); got %d",
+					rule.RequiredApprovals, approvedCount)
+			}
+			// Check if any non-dismissed CHANGES_REQUESTED review exists.
+			var blockedCount int64
+			orm.DB.Model(&models.PRReview{}).
+				Where("pull_request_id = ? AND state = 'CHANGES_REQUESTED' AND dismissed = false", pr.ID).
+				Count(&blockedCount)
+			if blockedCount > 0 {
+				return false, "", "", status.Error(codes.FailedPrecondition,
+					"branch protection blocks merge: reviewer requested changes")
+			}
+		}
 	}
-	title := "Merge pull request #" + itoa(pr.Number)
-	if commitTitle != nil {
+
+	// Resolve the caller's display name and email for the merge commit.
+	committerName := "Gyt"
+	committerEmail := "noreply@gyt.local"
+	var caller models.User
+	if callerID != 0 {
+		if err := orm.DB.First(&caller, callerID).Error; err == nil {
+			committerName = caller.DisplayName
+			if committerName == "" {
+				committerName = caller.Username
+			}
+			committerEmail = caller.Email
+		}
+	}
+
+	method := "merge"
+	if mergeMethod != nil && *mergeMethod != "" {
+		method = *mergeMethod
+	}
+	title := "Merge pull request #" + itoa(pr.Number) + " from " + pr.HeadBranch
+	if commitTitle != nil && *commitTitle != "" {
 		title = *commitTitle
 	}
+
+	// Perform the actual git merge via soft-serve.
+	mergeResp, err := gitClient.GitClient.MergeBranches(ctx, &ssgrpc.MergeBranchesRequest{
+		RepoName:       r.GitRepoName,
+		BaseBranch:     pr.BaseBranch,
+		HeadBranch:     pr.HeadBranch,
+		MergeMethod:    method,
+		CommitTitle:    title,
+		CommitterName:  committerName,
+		CommitterEmail: committerEmail,
+	})
+	if err != nil {
+		return false, "", "", err
+	}
+	if !mergeResp.GetMerged() {
+		return false, mergeResp.GetSha(), mergeResp.GetMessage(), nil
+	}
+
+	sha := mergeResp.GetSha()
+	now := time.Now()
 	orm.DB.Model(pr).Updates(map[string]interface{}{
 		"state":     "merged",
 		"merged":    true,
 		"merged_at": now,
+		"head_sha":  sha,
 	})
 	return true, sha, title, nil
 }
@@ -371,6 +437,121 @@ func (s *PRService) ListReviews(ctx context.Context, owner, repo string, number 
 	var reviews []models.PRReview
 	orm.DB.Where("pull_request_id = ?", pr.ID).Preload("Reviewer").Find(&reviews)
 	return reviews, nil
+}
+
+// ─── Review Requests ──────────────────────────────────────────────────────────
+
+func (s *PRService) RequestReview(ctx context.Context, callerID uint, owner, repo string, number int, username string) error {
+	r, err := resolveRepo(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+	pr, err := s.loadPR(r.ID, number)
+	if err != nil {
+		return err
+	}
+	var reviewer models.User
+	if err := orm.DB.Where("username = ?", username).First(&reviewer).Error; err != nil {
+		return status.Errorf(codes.NotFound, "user %q not found", username)
+	}
+	// Upsert: avoid duplicate requests.
+	var existing models.ReviewRequest
+	res := orm.DB.Where("pull_request_id = ? AND reviewer_id = ?", pr.ID, reviewer.ID).First(&existing)
+	if res.Error == gorm.ErrRecordNotFound {
+		req := &models.ReviewRequest{
+			PullRequestID: pr.ID,
+			ReviewerID:    reviewer.ID,
+			RequestedByID: callerID,
+		}
+		return orm.DB.Create(req).Error
+	}
+	return nil
+}
+
+func (s *PRService) RemoveReviewRequest(ctx context.Context, callerID uint, owner, repo string, number int, username string) error {
+	r, err := resolveRepo(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+	pr, err := s.loadPR(r.ID, number)
+	if err != nil {
+		return err
+	}
+	var reviewer models.User
+	if err := orm.DB.Where("username = ?", username).First(&reviewer).Error; err != nil {
+		return status.Errorf(codes.NotFound, "user %q not found", username)
+	}
+	return orm.DB.Where("pull_request_id = ? AND reviewer_id = ?", pr.ID, reviewer.ID).Delete(&models.ReviewRequest{}).Error
+}
+
+func (s *PRService) ListReviewRequests(ctx context.Context, owner, repo string, number int) ([]models.ReviewRequest, error) {
+	r, err := resolveRepo(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+	pr, err := s.loadPR(r.ID, number)
+	if err != nil {
+		return nil, err
+	}
+	var requests []models.ReviewRequest
+	orm.DB.Where("pull_request_id = ?", pr.ID).Preload("Reviewer").Preload("RequestedBy").Find(&requests)
+	return requests, nil
+}
+
+// ─── Review Dismissal ─────────────────────────────────────────────────────────
+
+func (s *PRService) DismissReview(ctx context.Context, callerID uint, owner, repo, reviewID, reason string) (*models.PRReview, error) {
+	id, err := strconv.ParseUint(reviewID, 10, 64)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid review id")
+	}
+	// Verify the review belongs to a PR in this repo.
+	r, err := resolveRepo(ctx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+	var review models.PRReview
+	if err := orm.DB.Preload("Reviewer").Preload("PullRequest").First(&review, id).Error; err != nil {
+		return nil, status.Error(codes.NotFound, "review not found")
+	}
+	if review.PullRequest.RepositoryID != r.ID {
+		return nil, status.Error(codes.PermissionDenied, "review does not belong to this repository")
+	}
+	now := time.Now()
+	review.Dismissed = true
+	review.DismissedAt = &now
+	review.DismissReason = reason
+	review.State = "DISMISSED"
+	orm.DB.Save(&review)
+	return &review, nil
+}
+
+// DismissStaleReviews dismisses all non-dismissed APPROVED/CHANGES_REQUESTED reviews on a PR.
+// This should be called when new commits are pushed to the head branch.
+func (s *PRService) DismissStaleReviews(ctx context.Context, callerID uint, owner, repo string, number int) error {
+	r, err := resolveRepo(ctx, owner, repo)
+	if err != nil {
+		return err
+	}
+	pr, err := s.loadPR(r.ID, number)
+	if err != nil {
+		return err
+	}
+	// Only auto-dismiss if branch protection says so.
+	bpSvc := &BranchProtectionService{}
+	rule := bpSvc.MatchingRule(r.ID, pr.BaseBranch)
+	if rule == nil || !rule.DismissStaleReviews {
+		return nil
+	}
+	now := time.Now()
+	return orm.DB.Model(&models.PRReview{}).
+		Where("pull_request_id = ? AND dismissed = false AND state IN ('APPROVED', 'CHANGES_REQUESTED')", pr.ID).
+		Updates(map[string]interface{}{
+			"dismissed":      true,
+			"dismissed_at":   now,
+			"dismiss_reason": "New commits were pushed to the branch",
+			"state":          "DISMISSED",
+		}).Error
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────

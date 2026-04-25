@@ -7,6 +7,7 @@ package gql
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/Gyt-project/backend-api/pkg/gql/model"
@@ -581,13 +582,18 @@ func (r *mutationResolver) RemovePRAssignee(ctx context.Context, owner string, r
 
 // CreatePRComment is the resolver for the createPRComment field.
 func (r *mutationResolver) CreatePRComment(ctx context.Context, input model.CreatePRCommentInput) (*model.PRComment, error) {
-	resp, err := r.Client.CreatePRComment(grpcCtx(ctx), &pb.CreatePRCommentRequest{
+	grpcReq := &pb.CreatePRCommentRequest{
 		Owner:  input.Owner,
 		Repo:   input.Repo,
 		Number: int32(input.Number),
 		Body:   input.Body,
 		Path:   input.Path,
-	})
+	}
+	if input.Line != nil {
+		v := int32(*input.Line)
+		grpcReq.Line = &v
+	}
+	resp, err := r.Client.CreatePRComment(grpcCtx(ctx), grpcReq)
 	if err != nil {
 		return nil, err
 	}
@@ -630,6 +636,101 @@ func (r *mutationResolver) CreatePRReview(ctx context.Context, input model.Creat
 		return nil, err
 	}
 	return pbPRReviewToModel(resp), nil
+}
+
+// RequestReview is the resolver for the requestReview field.
+func (r *mutationResolver) RequestReview(ctx context.Context, owner string, repo string, number int, username string) (bool, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, r.PRSvc.RequestReview(ctx, callerID, owner, repo, number, username)
+}
+
+// RemoveReviewRequest is the resolver for the removeReviewRequest field.
+func (r *mutationResolver) RemoveReviewRequest(ctx context.Context, owner string, repo string, number int, username string) (bool, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, r.PRSvc.RemoveReviewRequest(ctx, callerID, owner, repo, number, username)
+}
+
+// DismissReview is the resolver for the dismissReview field.
+func (r *mutationResolver) DismissReview(ctx context.Context, owner string, repo string, reviewID string, reason *string) (*model.PRReview, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	reasonStr := ""
+	if reason != nil {
+		reasonStr = *reason
+	}
+	rev, err := r.PRSvc.DismissReview(ctx, callerID, owner, repo, reviewID, reasonStr)
+	if err != nil {
+		return nil, err
+	}
+	return prReviewToModel(rev), nil
+}
+
+// DismissStaleReviews is the resolver for the dismissStaleReviews field.
+func (r *mutationResolver) DismissStaleReviews(ctx context.Context, owner string, repo string, number int) (bool, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, r.PRSvc.DismissStaleReviews(ctx, callerID, owner, repo, number)
+}
+
+// CreateBranchProtection is the resolver for the createBranchProtection field.
+func (r *mutationResolver) CreateBranchProtection(ctx context.Context, input model.CreateBranchProtectionInput) (*model.BranchProtection, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	requirePR := false
+	if input.RequirePullRequest != nil {
+		requirePR = *input.RequirePullRequest
+	}
+	requiredApprovals := 0
+	if input.RequiredApprovals != nil {
+		requiredApprovals = *input.RequiredApprovals
+	}
+	dismissStale := false
+	if input.DismissStaleReviews != nil {
+		dismissStale = *input.DismissStaleReviews
+	}
+	blockForcePush := false
+	if input.BlockForcePush != nil {
+		blockForcePush = *input.BlockForcePush
+	}
+	rule, err := r.BranchProt.Create(ctx, callerID, input.Owner, input.Repo, input.Pattern, requirePR, requiredApprovals, dismissStale, blockForcePush)
+	if err != nil {
+		return nil, err
+	}
+	return branchProtectionToModel(rule), nil
+}
+
+// UpdateBranchProtection is the resolver for the updateBranchProtection field.
+func (r *mutationResolver) UpdateBranchProtection(ctx context.Context, input model.UpdateBranchProtectionInput) (*model.BranchProtection, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rule, err := r.BranchProt.Update(ctx, callerID, input.Owner, input.Repo, input.ID, input.Pattern, input.RequirePullRequest, input.RequiredApprovals, input.DismissStaleReviews, input.BlockForcePush)
+	if err != nil {
+		return nil, err
+	}
+	return branchProtectionToModel(rule), nil
+}
+
+// DeleteBranchProtection is the resolver for the deleteBranchProtection field.
+func (r *mutationResolver) DeleteBranchProtection(ctx context.Context, owner string, repo string, id string) (bool, error) {
+	callerID, err := extractCallerID(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, r.BranchProt.Delete(ctx, callerID, owner, repo, id)
 }
 
 // CreateWebhook is the resolver for the createWebhook field.
@@ -1268,6 +1369,21 @@ func (r *queryResolver) ListPRReviews(ctx context.Context, owner string, repo st
 		out.Reviews = append(out.Reviews, pbPRReviewToModel(rv))
 	}
 	return out, nil
+}
+
+// ListReviewRequests is the resolver for the listReviewRequests field.
+func (r *queryResolver) ListReviewRequests(ctx context.Context, owner string, repo string, number int) (*model.ListReviewRequestsResponse, error) {
+	panic(fmt.Errorf("not implemented: ListReviewRequests - listReviewRequests"))
+}
+
+// ListBranchProtections is the resolver for the listBranchProtections field.
+func (r *queryResolver) ListBranchProtections(ctx context.Context, owner string, repo string) (*model.ListBranchProtectionsResponse, error) {
+	panic(fmt.Errorf("not implemented: ListBranchProtections - listBranchProtections"))
+}
+
+// GetBranchProtection is the resolver for the getBranchProtection field.
+func (r *queryResolver) GetBranchProtection(ctx context.Context, owner string, repo string, id string) (*model.BranchProtection, error) {
+	panic(fmt.Errorf("not implemented: GetBranchProtection - getBranchProtection"))
 }
 
 // ListWebhooks is the resolver for the listWebhooks field.

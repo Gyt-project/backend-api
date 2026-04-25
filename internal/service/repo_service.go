@@ -190,6 +190,7 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 		_ = gitClient.GitClient.DeleteRepository(ctx, &ssgrpc.DeleteRepositoryRequest{Name: gitRepoName})
 		return nil, status.Errorf(codes.Internal, "failed to persist repository: %v", err)
 	}
+	SeedDefaultLabels(repo.ID)
 	return repo, nil
 }
 

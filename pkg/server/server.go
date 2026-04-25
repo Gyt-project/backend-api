@@ -1082,7 +1082,12 @@ func (s *GytServer) CreatePRComment(ctx context.Context, req *pb.CreatePRComment
 	if err != nil {
 		return nil, err
 	}
-	comment, err := s.PRs.CreateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetBody(), req.Path, nil)
+	var line *int
+	if req.Line != nil {
+		v := int(req.GetLine())
+		line = &v
+	}
+	comment, err := s.PRs.CreateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetBody(), req.Path, line)
 	if err != nil {
 		return nil, err
 	}

@@ -43,6 +43,17 @@ type Branch struct {
 	CommitSha string `json:"commitSha"`
 }
 
+type BranchProtection struct {
+	ID                  string    `json:"id"`
+	Pattern             string    `json:"pattern"`
+	RequirePullRequest  bool      `json:"requirePullRequest"`
+	RequiredApprovals   int       `json:"requiredApprovals"`
+	DismissStaleReviews bool      `json:"dismissStaleReviews"`
+	BlockForcePush      bool      `json:"blockForcePush"`
+	CreatedAt           time.Time `json:"createdAt"`
+	UpdatedAt           time.Time `json:"updatedAt"`
+}
+
 type CheckPathResponse struct {
 	Exists bool `json:"exists"`
 	IsDir  bool `json:"isDir"`
@@ -90,6 +101,16 @@ type CompareResponse struct {
 	FilesChanged   int         `json:"filesChanged"`
 	CommitsAhead   int         `json:"commitsAhead"`
 	Patch          string      `json:"patch"`
+}
+
+type CreateBranchProtectionInput struct {
+	Owner               string `json:"owner"`
+	Repo                string `json:"repo"`
+	Pattern             string `json:"pattern"`
+	RequirePullRequest  *bool  `json:"requirePullRequest,omitempty"`
+	RequiredApprovals   *int   `json:"requiredApprovals,omitempty"`
+	DismissStaleReviews *bool  `json:"dismissStaleReviews,omitempty"`
+	BlockForcePush      *bool  `json:"blockForcePush,omitempty"`
 }
 
 type CreateIssueInput struct {
@@ -221,6 +242,10 @@ type Label struct {
 	Description string `json:"description"`
 }
 
+type ListBranchProtectionsResponse struct {
+	Rules []*BranchProtection `json:"rules"`
+}
+
 type ListBranchesResponse struct {
 	Branches []*Branch `json:"branches"`
 }
@@ -280,6 +305,10 @@ type ListReposResponse struct {
 	Total        int           `json:"total"`
 	Page         int           `json:"page"`
 	PerPage      int           `json:"perPage"`
+}
+
+type ListReviewRequestsResponse struct {
+	Requests []*ReviewRequest `json:"requests"`
 }
 
 type ListSSHKeysResponse struct {
@@ -358,11 +387,14 @@ type PRComment struct {
 }
 
 type PRReview struct {
-	ID          string    `json:"id"`
-	Reviewer    *User     `json:"reviewer"`
-	State       string    `json:"state"`
-	Body        string    `json:"body"`
-	SubmittedAt time.Time `json:"submittedAt"`
+	ID            string     `json:"id"`
+	Reviewer      *User      `json:"reviewer"`
+	State         string     `json:"state"`
+	Body          string     `json:"body"`
+	SubmittedAt   time.Time  `json:"submittedAt"`
+	Dismissed     bool       `json:"dismissed"`
+	DismissedAt   *time.Time `json:"dismissedAt,omitempty"`
+	DismissReason string     `json:"dismissReason"`
 }
 
 type PullRequest struct {
@@ -436,6 +468,13 @@ type Repository struct {
 	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
+type ReviewRequest struct {
+	ID          string    `json:"id"`
+	Reviewer    *User     `json:"reviewer"`
+	RequestedBy *User     `json:"requestedBy"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
 type SSHKey struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -462,6 +501,17 @@ type TreeEntry struct {
 	Size        int    `json:"size"`
 	IsDir       bool   `json:"isDir"`
 	IsSubmodule bool   `json:"isSubmodule"`
+}
+
+type UpdateBranchProtectionInput struct {
+	Owner               string  `json:"owner"`
+	Repo                string  `json:"repo"`
+	ID                  string  `json:"id"`
+	Pattern             *string `json:"pattern,omitempty"`
+	RequirePullRequest  *bool   `json:"requirePullRequest,omitempty"`
+	RequiredApprovals   *int    `json:"requiredApprovals,omitempty"`
+	DismissStaleReviews *bool   `json:"dismissStaleReviews,omitempty"`
+	BlockForcePush      *bool   `json:"blockForcePush,omitempty"`
 }
 
 type UpdateCollaboratorInput struct {

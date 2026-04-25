@@ -473,11 +473,14 @@ type PRComment {
 }
 
 type PRReview {
-  id:          String!
-  reviewer:    User!
-  state:       String!
-  body:        String!
-  submittedAt: Time!
+  id:            String!
+  reviewer:      User!
+  state:         String!
+  body:          String!
+  submittedAt:   Time!
+  dismissed:     Boolean!
+  dismissedAt:   Time
+  dismissReason: String!
 }
 
 type ListPRsResponse {
@@ -539,6 +542,57 @@ input CreatePRReviewInput {
   number: Int!
   state:  String!
   body:   String!
+}
+
+# ─── Review Requests ──────────────────────────────────────────────────────────
+
+type ReviewRequest {
+  id:          String!
+  reviewer:    User!
+  requestedBy: User!
+  createdAt:   Time!
+}
+
+type ListReviewRequestsResponse {
+  requests: [ReviewRequest!]!
+}
+
+# ─── Branch Protection ────────────────────────────────────────────────────────
+
+type BranchProtection {
+  id:                  String!
+  pattern:             String!
+  requirePullRequest:  Boolean!
+  requiredApprovals:   Int!
+  dismissStaleReviews: Boolean!
+  blockForcePush:      Boolean!
+  createdAt:           Time!
+  updatedAt:           Time!
+}
+
+type ListBranchProtectionsResponse {
+  rules: [BranchProtection!]!
+}
+
+input CreateBranchProtectionInput {
+  owner:               String!
+  repo:                String!
+  pattern:             String!
+  requirePullRequest:  Boolean
+  requiredApprovals:   Int
+  dismissStaleReviews: Boolean
+  blockForcePush:      Boolean
+}
+
+input UpdateBranchProtectionInput {
+  owner:               String!
+  repo:                String!
+  id:                  String!
+  pattern:             String
+  requirePullRequest:  Boolean
+  requiredApprovals:   Int
+  dismissStaleReviews: Boolean
+  blockForcePush:      Boolean
 }
 
 # ─── Webhooks ─────────────────────────────────────────────────────────────────
@@ -641,6 +695,11 @@ type Query {
   getPullRequestDiff(owner: String!, repo: String!, number: Int!): CompareResponse!
   listPRComments(owner: String!, repo: String!, number: Int!): ListPRCommentsResponse!
   listPRReviews(owner: String!, repo: String!, number: Int!): ListPRReviewsResponse!
+  listReviewRequests(owner: String!, repo: String!, number: Int!): ListReviewRequestsResponse!
+
+  # Branch Protection
+  listBranchProtections(owner: String!, repo: String!): ListBranchProtectionsResponse!
+  getBranchProtection(owner: String!, repo: String!, id: String!): BranchProtection!
 
   # Webhooks
   listWebhooks(owner: String!, repo: String): ListWebhooksResponse!
@@ -734,6 +793,15 @@ type Mutation {
   updatePRComment(owner: String!, repo: String!, commentId: String!, body: String!): PRComment!
   deletePRComment(owner: String!, repo: String!, commentId: String!): Boolean!
   createPRReview(input: CreatePRReviewInput!): PRReview!
+  requestReview(owner: String!, repo: String!, number: Int!, username: String!): Boolean!
+  removeReviewRequest(owner: String!, repo: String!, number: Int!, username: String!): Boolean!
+  dismissReview(owner: String!, repo: String!, reviewId: String!, reason: String): PRReview!
+  dismissStaleReviews(owner: String!, repo: String!, number: Int!): Boolean!
+
+  # Branch Protection
+  createBranchProtection(input: CreateBranchProtectionInput!): BranchProtection!
+  updateBranchProtection(input: UpdateBranchProtectionInput!): BranchProtection!
+  deleteBranchProtection(owner: String!, repo: String!, id: String!): Boolean!
 
   # Webhooks
   createWebhook(input: CreateWebhookInput!): Webhook!

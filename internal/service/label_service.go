@@ -80,3 +80,21 @@ func (s *LabelService) DeleteLabel(ctx context.Context, callerID uint, owner, re
 	return orm.DB.Delete(label).Error
 }
 
+// SeedDefaultLabels creates the standard set of labels for a newly created repo.
+// It is called after repository creation and silently skips labels that already exist.
+func SeedDefaultLabels(repoID uint) {
+	defaults := []models.Label{
+		{RepositoryID: repoID, Name: "bug", Color: "d73a4a", Description: "Something isn't working"},
+		{RepositoryID: repoID, Name: "enhancement", Color: "a2eeef", Description: "New feature or request"},
+		{RepositoryID: repoID, Name: "documentation", Color: "0075ca", Description: "Improvements or additions to documentation"},
+		{RepositoryID: repoID, Name: "question", Color: "d876e3", Description: "Further information is requested"},
+		{RepositoryID: repoID, Name: "good first issue", Color: "7057ff", Description: "Good for newcomers"},
+		{RepositoryID: repoID, Name: "help wanted", Color: "008672", Description: "Extra attention is needed"},
+		{RepositoryID: repoID, Name: "duplicate", Color: "cfd3d7", Description: "This issue or pull request already exists"},
+		{RepositoryID: repoID, Name: "invalid", Color: "e4e669", Description: "This doesn't seem right"},
+		{RepositoryID: repoID, Name: "wontfix", Color: "ffffff", Description: "This will not be worked on"},
+	}
+	for _, l := range defaults {
+		orm.DB.Where(models.Label{RepositoryID: repoID, Name: l.Name}).FirstOrCreate(&l)
+	}
+}
