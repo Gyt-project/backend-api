@@ -468,6 +468,7 @@ type PRComment {
   author:    User!
   path:      String
   line:      Int
+  commitSha: String
   createdAt: Time!
   updatedAt: Time!
 }
@@ -528,12 +529,13 @@ input MergePRInput {
 }
 
 input CreatePRCommentInput {
-  owner:  String!
-  repo:   String!
-  number: Int!
-  body:   String!
-  path:   String
-  line:   Int
+  owner:     String!
+  repo:      String!
+  number:    Int!
+  body:      String!
+  path:      String
+  line:      Int
+  commitSha: String
 }
 
 input CreatePRReviewInput {
@@ -555,6 +557,14 @@ type ReviewRequest {
 
 type ListReviewRequestsResponse {
   requests: [ReviewRequest!]!
+}
+
+type PRMergeEligibility {
+  canMerge:                Boolean!
+  reason:                  String
+  requiredApprovals:       Int!
+  currentApprovals:        Int!
+  blockedByChangesRequest: Boolean!
 }
 
 # ─── Branch Protection ────────────────────────────────────────────────────────
@@ -696,6 +706,7 @@ type Query {
   listPRComments(owner: String!, repo: String!, number: Int!): ListPRCommentsResponse!
   listPRReviews(owner: String!, repo: String!, number: Int!): ListPRReviewsResponse!
   listReviewRequests(owner: String!, repo: String!, number: Int!): ListReviewRequestsResponse!
+  getPRMergeEligibility(owner: String!, repo: String!, number: Int!): PRMergeEligibility!
 
   # Branch Protection
   listBranchProtections(owner: String!, repo: String!): ListBranchProtectionsResponse!

@@ -253,6 +253,80 @@ func (s *PRService) UpdatePullRequest(ctx context.Context, callerID uint, owner,
 	return s.loadPRFull(ctx, r.ID, number)
 }
 
+// HandleBranchPush is called when commits are pushed to a branch.
+// It dismisses stale reviews (if branch protection requires it) for all
+// open PRs whose head branch matches the pushed branch, and returns their numbers.
+func (s *PRService) HandleBranchPush(ctx context.Context, owner, repo, branch string) ([]int, error) {
+	dbCtx, dbCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer dbCancel()
+
+	r, err := resolveRepo(dbCtx, owner, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	var prs []models.PullRequest
+	if err := orm.DB.WithContext(dbCtx).
+		Where("repository_id = ? AND head_branch = ? AND state = 'open'", r.ID, branch).
+		Find(&prs).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to find PRs: %v", err)
+	}
+
+	var numbers []int
+	for _, pr := range prs {
+		numbers = append(numbers, pr.Number)
+		// Ignore error — DismissStaleReviews already respects branch protection rules.
+		_ = s.DismissStaleReviews(dbCtx, 0, owner, repo, pr.Number)
+	}
+	return numbers, nil
+}
+
+func (s *PRService) CheckMergeEligibility(ctx context.Context, owner, repo string, number int) (canMerge bool, reason string, required int, current int, blockedByChanges bool, err error) {
+	dbCtx, dbCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer dbCancel()
+
+	r, e := resolveRepo(dbCtx, owner, repo)
+	if e != nil {
+		return false, "repository not found", 0, 0, false, e
+	}
+	pr, e := s.loadPRBase(dbCtx, r.ID, number)
+	if e != nil {
+		return false, "pull request not found", 0, 0, false, e
+	}
+
+	bpSvc := &BranchProtectionService{}
+	rule := bpSvc.MatchingRule(r.ID, pr.BaseBranch)
+	if rule == nil || !rule.RequirePullRequest {
+		return true, "", 0, 0, false, nil
+	}
+
+	var approvedCount int64
+	if e := orm.DB.WithContext(dbCtx).Model(&models.PRReview{}).
+		Where("pull_request_id = ? AND state = 'APPROVED' AND dismissed = false", pr.ID).
+		Count(&approvedCount).Error; e != nil {
+		return false, "failed to count reviews", rule.RequiredApprovals, 0, false, status.Errorf(codes.Internal, "failed to count reviews: %v", e)
+	}
+
+	var blockedCount int64
+	if e := orm.DB.WithContext(dbCtx).Model(&models.PRReview{}).
+		Where("pull_request_id = ? AND state = 'CHANGES_REQUESTED' AND dismissed = false", pr.ID).
+		Count(&blockedCount).Error; e != nil {
+		return false, "failed to count blocked reviews", rule.RequiredApprovals, int(approvedCount), false, status.Errorf(codes.Internal, "failed to count blocked reviews: %v", e)
+	}
+
+	blockedByChanges = blockedCount > 0
+	current = int(approvedCount)
+	required = rule.RequiredApprovals
+
+	if blockedByChanges {
+		return false, "a reviewer requested changes", required, current, true, nil
+	}
+	if current < required {
+		return false, fmt.Sprintf("requires at least %d approval(s), got %d", required, current), required, current, false, nil
+	}
+	return true, "", required, current, false, nil
+}
+
 func (s *PRService) MergePullRequest(ctx context.Context, callerID uint, owner, repo string, number int, mergeMethod, commitTitle, commitMessage *string) (bool, string, string, error) {
 	dbCtx, dbCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer dbCancel()
@@ -475,7 +549,7 @@ func (s *PRService) RemoveAssignee(ctx context.Context, owner, repo string, numb
 	return orm.DB.WithContext(ctx).Model(pr).Association("Assignees").Delete(&user)
 }
 
-func (s *PRService) CreateComment(ctx context.Context, callerID uint, owner, repo string, number int, body string, path *string, line *int) (*models.PRComment, error) {
+func (s *PRService) CreateComment(ctx context.Context, callerID uint, owner, repo string, number int, body string, path *string, line *int, commitSHA *string) (*models.PRComment, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -495,6 +569,7 @@ func (s *PRService) CreateComment(ctx context.Context, callerID uint, owner, rep
 		Body:          body,
 		Path:          path,
 		Line:          line,
+		CommitSHA:     commitSHA,
 	}
 
 	if err := orm.DB.WithContext(ctx).Create(comment).Error; err != nil {

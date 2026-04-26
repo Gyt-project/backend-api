@@ -358,11 +358,20 @@ type ComplexityRoot struct {
 	PRComment struct {
 		Author    func(childComplexity int) int
 		Body      func(childComplexity int) int
+		CommitSha func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Line      func(childComplexity int) int
 		Path      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+	}
+
+	PRMergeEligibility struct {
+		BlockedByChangesRequest func(childComplexity int) int
+		CanMerge                func(childComplexity int) int
+		CurrentApprovals        func(childComplexity int) int
+		Reason                  func(childComplexity int) int
+		RequiredApprovals       func(childComplexity int) int
 	}
 
 	PRReview struct {
@@ -416,6 +425,7 @@ type ComplexityRoot struct {
 		GetLabel                func(childComplexity int, owner string, repo string, name string) int
 		GetOrgMembership        func(childComplexity int, orgName string, username string) int
 		GetOrganization         func(childComplexity int, name string) int
+		GetPRMergeEligibility   func(childComplexity int, owner string, repo string, number int) int
 		GetPullRequest          func(childComplexity int, owner string, repo string, number int) int
 		GetPullRequestDiff      func(childComplexity int, owner string, repo string, number int) int
 		GetRepository           func(childComplexity int, owner string, name string) int
@@ -650,6 +660,7 @@ type QueryResolver interface {
 	ListPRComments(ctx context.Context, owner string, repo string, number int) (*model.ListPRCommentsResponse, error)
 	ListPRReviews(ctx context.Context, owner string, repo string, number int) (*model.ListPRReviewsResponse, error)
 	ListReviewRequests(ctx context.Context, owner string, repo string, number int) (*model.ListReviewRequestsResponse, error)
+	GetPRMergeEligibility(ctx context.Context, owner string, repo string, number int) (*model.PRMergeEligibility, error)
 	ListBranchProtections(ctx context.Context, owner string, repo string) (*model.ListBranchProtectionsResponse, error)
 	GetBranchProtection(ctx context.Context, owner string, repo string, id string) (*model.BranchProtection, error)
 	ListWebhooks(ctx context.Context, owner string, repo *string) (*model.ListWebhooksResponse, error)
@@ -2215,6 +2226,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.PRComment.Body(childComplexity), true
+	case "PRComment.commitSha":
+		if e.ComplexityRoot.PRComment.CommitSha == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PRComment.CommitSha(childComplexity), true
 	case "PRComment.createdAt":
 		if e.ComplexityRoot.PRComment.CreatedAt == nil {
 			break
@@ -2245,6 +2262,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.PRComment.UpdatedAt(childComplexity), true
+
+	case "PRMergeEligibility.blockedByChangesRequest":
+		if e.ComplexityRoot.PRMergeEligibility.BlockedByChangesRequest == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PRMergeEligibility.BlockedByChangesRequest(childComplexity), true
+	case "PRMergeEligibility.canMerge":
+		if e.ComplexityRoot.PRMergeEligibility.CanMerge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PRMergeEligibility.CanMerge(childComplexity), true
+	case "PRMergeEligibility.currentApprovals":
+		if e.ComplexityRoot.PRMergeEligibility.CurrentApprovals == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PRMergeEligibility.CurrentApprovals(childComplexity), true
+	case "PRMergeEligibility.reason":
+		if e.ComplexityRoot.PRMergeEligibility.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PRMergeEligibility.Reason(childComplexity), true
+	case "PRMergeEligibility.requiredApprovals":
+		if e.ComplexityRoot.PRMergeEligibility.RequiredApprovals == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PRMergeEligibility.RequiredApprovals(childComplexity), true
 
 	case "PRReview.body":
 		if e.ComplexityRoot.PRReview.Body == nil {
@@ -2582,6 +2630,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.GetOrganization(childComplexity, args["name"].(string)), true
+	case "Query.getPRMergeEligibility":
+		if e.ComplexityRoot.Query.GetPRMergeEligibility == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPRMergeEligibility_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.GetPRMergeEligibility(childComplexity, args["owner"].(string), args["repo"].(string), args["number"].(int)), true
 	case "Query.getPullRequest":
 		if e.ComplexityRoot.Query.GetPullRequest == nil {
 			break
@@ -4851,6 +4910,27 @@ func (ec *executionContext) field_Query_getOrganization_args(ctx context.Context
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPRMergeEligibility_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "owner", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["owner"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "repo", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["repo"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "number", ec.unmarshalNInt2int)
+	if err != nil {
+		return nil, err
+	}
+	args["number"] = arg2
 	return args, nil
 }
 
@@ -8723,6 +8803,8 @@ func (ec *executionContext) fieldContext_ListPRCommentsResponse_comments(_ conte
 				return ec.fieldContext_PRComment_path(ctx, field)
 			case "line":
 				return ec.fieldContext_PRComment_line(ctx, field)
+			case "commitSha":
+				return ec.fieldContext_PRComment_commitSha(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_PRComment_createdAt(ctx, field)
 			case "updatedAt":
@@ -12169,6 +12251,8 @@ func (ec *executionContext) fieldContext_Mutation_createPRComment(ctx context.Co
 				return ec.fieldContext_PRComment_path(ctx, field)
 			case "line":
 				return ec.fieldContext_PRComment_line(ctx, field)
+			case "commitSha":
+				return ec.fieldContext_PRComment_commitSha(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_PRComment_createdAt(ctx, field)
 			case "updatedAt":
@@ -12226,6 +12310,8 @@ func (ec *executionContext) fieldContext_Mutation_updatePRComment(ctx context.Co
 				return ec.fieldContext_PRComment_path(ctx, field)
 			case "line":
 				return ec.fieldContext_PRComment_line(ctx, field)
+			case "commitSha":
+				return ec.fieldContext_PRComment_commitSha(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_PRComment_createdAt(ctx, field)
 			case "updatedAt":
@@ -13414,6 +13500,35 @@ func (ec *executionContext) fieldContext_PRComment_line(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _PRComment_commitSha(ctx context.Context, field graphql.CollectedField, obj *model.PRComment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PRComment_commitSha,
+		func(ctx context.Context) (any, error) {
+			return obj.CommitSha, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PRComment_commitSha(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PRComment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PRComment_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.PRComment) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13467,6 +13582,151 @@ func (ec *executionContext) fieldContext_PRComment_updatedAt(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PRMergeEligibility_canMerge(ctx context.Context, field graphql.CollectedField, obj *model.PRMergeEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PRMergeEligibility_canMerge,
+		func(ctx context.Context) (any, error) {
+			return obj.CanMerge, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PRMergeEligibility_canMerge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PRMergeEligibility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PRMergeEligibility_reason(ctx context.Context, field graphql.CollectedField, obj *model.PRMergeEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PRMergeEligibility_reason,
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PRMergeEligibility_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PRMergeEligibility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PRMergeEligibility_requiredApprovals(ctx context.Context, field graphql.CollectedField, obj *model.PRMergeEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PRMergeEligibility_requiredApprovals,
+		func(ctx context.Context) (any, error) {
+			return obj.RequiredApprovals, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PRMergeEligibility_requiredApprovals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PRMergeEligibility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PRMergeEligibility_currentApprovals(ctx context.Context, field graphql.CollectedField, obj *model.PRMergeEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PRMergeEligibility_currentApprovals,
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentApprovals, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PRMergeEligibility_currentApprovals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PRMergeEligibility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PRMergeEligibility_blockedByChangesRequest(ctx context.Context, field graphql.CollectedField, obj *model.PRMergeEligibility) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PRMergeEligibility_blockedByChangesRequest,
+		func(ctx context.Context) (any, error) {
+			return obj.BlockedByChangesRequest, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PRMergeEligibility_blockedByChangesRequest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PRMergeEligibility",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16525,6 +16785,59 @@ func (ec *executionContext) fieldContext_Query_listReviewRequests(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_listReviewRequests_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getPRMergeEligibility(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_getPRMergeEligibility,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().GetPRMergeEligibility(ctx, fc.Args["owner"].(string), fc.Args["repo"].(string), fc.Args["number"].(int))
+		},
+		nil,
+		ec.marshalNPRMergeEligibility2ᚖgithubᚗcomᚋGytᚑprojectᚋbackendᚑapiᚋpkgᚋgqlᚋmodelᚐPRMergeEligibility,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_getPRMergeEligibility(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "canMerge":
+				return ec.fieldContext_PRMergeEligibility_canMerge(ctx, field)
+			case "reason":
+				return ec.fieldContext_PRMergeEligibility_reason(ctx, field)
+			case "requiredApprovals":
+				return ec.fieldContext_PRMergeEligibility_requiredApprovals(ctx, field)
+			case "currentApprovals":
+				return ec.fieldContext_PRMergeEligibility_currentApprovals(ctx, field)
+			case "blockedByChangesRequest":
+				return ec.fieldContext_PRMergeEligibility_blockedByChangesRequest(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PRMergeEligibility", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getPRMergeEligibility_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -20551,7 +20864,7 @@ func (ec *executionContext) unmarshalInputCreatePRCommentInput(ctx context.Conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"owner", "repo", "number", "body", "path", "line"}
+	fieldsInOrder := [...]string{"owner", "repo", "number", "body", "path", "line", "commitSha"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -20600,6 +20913,13 @@ func (ec *executionContext) unmarshalInputCreatePRCommentInput(ctx context.Conte
 				return it, err
 			}
 			it.Line = data
+		case "commitSha":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commitSha"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CommitSha = data
 		}
 	}
 	return it, nil
@@ -24259,6 +24579,8 @@ func (ec *executionContext) _PRComment(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._PRComment_path(ctx, field, obj)
 		case "line":
 			out.Values[i] = ec._PRComment_line(ctx, field, obj)
+		case "commitSha":
+			out.Values[i] = ec._PRComment_commitSha(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._PRComment_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -24266,6 +24588,62 @@ func (ec *executionContext) _PRComment(ctx context.Context, sel ast.SelectionSet
 			}
 		case "updatedAt":
 			out.Values[i] = ec._PRComment_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pRMergeEligibilityImplementors = []string{"PRMergeEligibility"}
+
+func (ec *executionContext) _PRMergeEligibility(ctx context.Context, sel ast.SelectionSet, obj *model.PRMergeEligibility) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pRMergeEligibilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PRMergeEligibility")
+		case "canMerge":
+			out.Values[i] = ec._PRMergeEligibility_canMerge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._PRMergeEligibility_reason(ctx, field, obj)
+		case "requiredApprovals":
+			out.Values[i] = ec._PRMergeEligibility_requiredApprovals(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentApprovals":
+			out.Values[i] = ec._PRMergeEligibility_currentApprovals(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "blockedByChangesRequest":
+			out.Values[i] = ec._PRMergeEligibility_blockedByChangesRequest(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -25430,6 +25808,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_listReviewRequests(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "getPRMergeEligibility":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPRMergeEligibility(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -27423,6 +27823,20 @@ func (ec *executionContext) marshalNPRComment2ᚖgithubᚗcomᚋGytᚑprojectᚋ
 		return graphql.Null
 	}
 	return ec._PRComment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPRMergeEligibility2githubᚗcomᚋGytᚑprojectᚋbackendᚑapiᚋpkgᚋgqlᚋmodelᚐPRMergeEligibility(ctx context.Context, sel ast.SelectionSet, v model.PRMergeEligibility) graphql.Marshaler {
+	return ec._PRMergeEligibility(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPRMergeEligibility2ᚖgithubᚗcomᚋGytᚑprojectᚋbackendᚑapiᚋpkgᚋgqlᚋmodelᚐPRMergeEligibility(ctx context.Context, sel ast.SelectionSet, v *model.PRMergeEligibility) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PRMergeEligibility(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPRReview2githubᚗcomᚋGytᚑprojectᚋbackendᚑapiᚋpkgᚋgqlᚋmodelᚐPRReview(ctx context.Context, sel ast.SelectionSet, v model.PRReview) graphql.Marshaler {

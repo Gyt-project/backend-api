@@ -20,30 +20,30 @@ import (
 // GytServer implémente pb.GytServiceServer
 type GytServer struct {
 	pb.UnimplementedGytServiceServer
-	Users       *service.UserService
-	Repos       *service.RepoService
-	Orgs        *service.OrgService
-	Stars       *service.StarService
-	Labels      *service.LabelService
-	Issues      *service.IssueService
-	PRs         *service.PRService
-	BranchProt  *service.BranchProtectionService
-	Webhooks    *service.WebhookService
-	Search      *service.SearchService
+	Users      *service.UserService
+	Repos      *service.RepoService
+	Orgs       *service.OrgService
+	Stars      *service.StarService
+	Labels     *service.LabelService
+	Issues     *service.IssueService
+	PRs        *service.PRService
+	BranchProt *service.BranchProtectionService
+	Webhooks   *service.WebhookService
+	Search     *service.SearchService
 }
 
 func NewGytServer() *GytServer {
 	return &GytServer{
-		Users:    &service.UserService{},
-		Repos:    &service.RepoService{},
-		Orgs:     &service.OrgService{},
-		Stars:    &service.StarService{},
-		Labels:      &service.LabelService{},
-		Issues:      &service.IssueService{},
-		PRs:         &service.PRService{},
-		BranchProt:  &service.BranchProtectionService{},
-		Webhooks:    &service.WebhookService{},
-		Search:      &service.SearchService{},
+		Users:      &service.UserService{},
+		Repos:      &service.RepoService{},
+		Orgs:       &service.OrgService{},
+		Stars:      &service.StarService{},
+		Labels:     &service.LabelService{},
+		Issues:     &service.IssueService{},
+		PRs:        &service.PRService{},
+		BranchProt: &service.BranchProtectionService{},
+		Webhooks:   &service.WebhookService{},
+		Search:     &service.SearchService{},
 	}
 }
 
@@ -1091,7 +1091,12 @@ func (s *GytServer) CreatePRComment(ctx context.Context, req *pb.CreatePRComment
 		v := int(req.GetLine())
 		line = &v
 	}
-	comment, err := s.PRs.CreateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetBody(), req.Path, line)
+	var commitSHA *string
+	if req.CommitSha != nil {
+		v := req.GetCommitSha()
+		commitSHA = &v
+	}
+	comment, err := s.PRs.CreateComment(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetBody(), req.Path, line, commitSHA)
 	if err != nil {
 		return nil, err
 	}
@@ -1210,12 +1215,39 @@ func (s *GytServer) RemovePRAssignee(ctx context.Context, req *pb.RemovePRAssign
 	return &emptypb.Empty{}, s.PRs.RemoveAssignee(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
 }
 
+func (s *GytServer) GetPRMergeEligibility(ctx context.Context, req *pb.GetPRMergeEligibilityRequest) (*pb.PRMergeEligibilityResponse, error) {
+	canMerge, reason, required, current, blockedByChanges, err := s.PRs.CheckMergeEligibility(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+	if err != nil {
+		return nil, err
+	}
+	return &pb.PRMergeEligibilityResponse{
+		CanMerge:                canMerge,
+		Reason:                  reason,
+		RequiredApprovals:       int32(required),
+		CurrentApprovals:        int32(current),
+		BlockedByChangesRequest: blockedByChanges,
+	}, nil
+}
+
 func (s *GytServer) DismissStaleReviews(ctx context.Context, req *pb.DismissStaleReviewsRequest) (*emptypb.Empty, error) {
 	callerID, err := auth.ExtractUserID(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &emptypb.Empty{}, s.PRs.DismissStaleReviews(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+}
+
+func (s *GytServer) HandleBranchPush(ctx context.Context, req *pb.BranchPushRequest) (*pb.BranchPushResponse, error) {
+	numbers, err := s.PRs.HandleBranchPush(ctx, req.GetOwner(), req.GetRepo(), req.GetBranch())
+	if err != nil {
+		// Non-fatal: return empty response so the gateway can still publish the repo push event.
+		return &pb.BranchPushResponse{}, nil
+	}
+	resp := &pb.BranchPushResponse{}
+	for _, n := range numbers {
+		resp.PrNumbers = append(resp.PrNumbers, int32(n))
+	}
+	return resp, nil
 }
 
 // ─── Branch Protection ───────────────────────────────────────────────────────

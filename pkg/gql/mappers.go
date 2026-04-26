@@ -367,6 +367,10 @@ func pbPRCommentToModel(c *pb.PRCommentResponse) *model.PRComment {
 		l := int(c.GetLine())
 		out.Line = &l
 	}
+	if c.CommitSha != nil {
+		sha := c.GetCommitSha()
+		out.CommitSha = &sha
+	}
 	return out
 }
 

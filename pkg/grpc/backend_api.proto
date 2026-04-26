@@ -132,6 +132,8 @@ service GytService {
   rpc RemovePRLabel(RemovePRLabelRequest) returns (google.protobuf.Empty);
   rpc AddPRAssignee(AddPRAssigneeRequest) returns (google.protobuf.Empty);
   rpc RemovePRAssignee(RemovePRAssigneeRequest) returns (google.protobuf.Empty);
+  rpc GetPRMergeEligibility(GetPRMergeEligibilityRequest) returns (PRMergeEligibilityResponse);
+  rpc HandleBranchPush(BranchPushRequest) returns (BranchPushResponse);
 
   // ─── Branch Protection ───────────────────────────────────────────────────
   rpc CreateBranchProtection(CreateBranchProtectionRequest) returns (BranchProtectionResponse);
@@ -1041,15 +1043,17 @@ message PRCommentResponse {
   optional int32  line                 = 5;  // line number for inline comments
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
+  optional string commit_sha           = 8;  // commit SHA when the comment was created
 }
 
 message CreatePRCommentRequest {
-  string owner         = 1;
-  string repo          = 2;
-  int32  number        = 3;
-  string body          = 4;
-  optional string path = 5;
-  optional int32  line = 6;
+  string owner               = 1;
+  string repo                = 2;
+  int32  number              = 3;
+  string body                = 4;
+  optional string path       = 5;
+  optional int32  line       = 6;
+  optional string commit_sha = 7;
 }
 
 message ListPRCommentsRequest {
@@ -1230,6 +1234,30 @@ message RemovePRAssigneeRequest {
   string repo     = 2;
   int32  number   = 3;
   string username = 4;
+}
+
+message GetPRMergeEligibilityRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+message PRMergeEligibilityResponse {
+  bool   can_merge                  = 1;
+  string reason                     = 2;
+  int32  required_approvals         = 3;
+  int32  current_approvals          = 4;
+  bool   blocked_by_changes_request = 5;
+}
+
+message BranchPushRequest {
+  string owner  = 1;
+  string repo   = 2;
+  string branch = 3;
+}
+
+message BranchPushResponse {
+  repeated int32 pr_numbers = 1;
 }
 
 // ═══════════════════════════════════════════════════════════════

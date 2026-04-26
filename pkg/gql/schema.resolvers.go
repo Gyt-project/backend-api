@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/Gyt-project/backend-api/pkg/events"
 	"github.com/Gyt-project/backend-api/pkg/gql/model"
 	pb "github.com/Gyt-project/backend-api/pkg/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -535,6 +536,9 @@ func (r *mutationResolver) MergePullRequest(ctx context.Context, input model.Mer
 	if err != nil {
 		return nil, err
 	}
+	key := fmt.Sprintf("%s/%s/%d", input.Owner, input.Repo, input.Number)
+	events.PublishPR(key, "pr_status_changed")
+	events.PublishRepo(fmt.Sprintf("%s/%s", input.Owner, input.Repo), "push")
 	return &model.MergePRResponse{Merged: resp.GetMerged(), Sha: resp.GetSha(), Message: resp.GetMessage()}, nil
 }
 
@@ -544,6 +548,7 @@ func (r *mutationResolver) ClosePullRequest(ctx context.Context, owner string, r
 	if err != nil {
 		return nil, err
 	}
+	events.PublishPR(fmt.Sprintf("%s/%s/%d", owner, repo, number), "pr_status_changed")
 	return pbPRToModel(resp), nil
 }
 
@@ -553,6 +558,7 @@ func (r *mutationResolver) ReopenPullRequest(ctx context.Context, owner string, 
 	if err != nil {
 		return nil, err
 	}
+	events.PublishPR(fmt.Sprintf("%s/%s/%d", owner, repo, number), "pr_status_changed")
 	return pbPRToModel(resp), nil
 }
 
@@ -593,10 +599,14 @@ func (r *mutationResolver) CreatePRComment(ctx context.Context, input model.Crea
 		v := int32(*input.Line)
 		grpcReq.Line = &v
 	}
+	if input.CommitSha != nil {
+		grpcReq.CommitSha = input.CommitSha
+	}
 	resp, err := r.Client.CreatePRComment(grpcCtx(ctx), grpcReq)
 	if err != nil {
 		return nil, err
 	}
+	events.PublishPR(fmt.Sprintf("%s/%s/%d", input.Owner, input.Repo, input.Number), "comment_added")
 	return pbPRCommentToModel(resp), nil
 }
 
@@ -635,6 +645,7 @@ func (r *mutationResolver) CreatePRReview(ctx context.Context, input model.Creat
 	if err != nil {
 		return nil, err
 	}
+	events.PublishPR(fmt.Sprintf("%s/%s/%d", input.Owner, input.Repo, input.Number), "review_submitted")
 	return pbPRReviewToModel(resp), nil
 }
 
@@ -646,6 +657,9 @@ func (r *mutationResolver) RequestReview(ctx context.Context, owner string, repo
 		Number:   int32(number),
 		Username: username,
 	})
+	if err == nil {
+		events.PublishPR(fmt.Sprintf("%s/%s/%d", owner, repo, number), "review_request_changed")
+	}
 	return err == nil, err
 }
 
@@ -657,6 +671,9 @@ func (r *mutationResolver) RemoveReviewRequest(ctx context.Context, owner string
 		Number:   int32(number),
 		Username: username,
 	})
+	if err == nil {
+		events.PublishPR(fmt.Sprintf("%s/%s/%d", owner, repo, number), "review_request_changed")
+	}
 	return err == nil, err
 }
 
@@ -1434,6 +1451,30 @@ func (r *queryResolver) ListReviewRequests(ctx context.Context, owner string, re
 		})
 	}
 	return &model.ListReviewRequestsResponse{Requests: modelRequests}, nil
+}
+
+// GetPRMergeEligibility is the resolver for the getPRMergeEligibility field.
+func (r *queryResolver) GetPRMergeEligibility(ctx context.Context, owner string, repo string, number int) (*model.PRMergeEligibility, error) {
+	resp, err := r.Client.GetPRMergeEligibility(grpcCtx(ctx), &pb.GetPRMergeEligibilityRequest{
+		Owner:  owner,
+		Repo:   repo,
+		Number: int32(number),
+	})
+	if err != nil {
+		return nil, err
+	}
+	reason := resp.GetReason()
+	var reasonPtr *string
+	if reason != "" {
+		reasonPtr = &reason
+	}
+	return &model.PRMergeEligibility{
+		CanMerge:                resp.GetCanMerge(),
+		Reason:                  reasonPtr,
+		RequiredApprovals:       int(resp.GetRequiredApprovals()),
+		CurrentApprovals:        int(resp.GetCurrentApprovals()),
+		BlockedByChangesRequest: resp.GetBlockedByChangesRequest(),
+	}, nil
 }
 
 // ListBranchProtections is the resolver for the listBranchProtections field.

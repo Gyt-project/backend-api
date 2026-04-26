@@ -8304,6 +8304,7 @@ type PRCommentResponse struct {
 	Line          *int32                 `protobuf:"varint,5,opt,name=line,proto3,oneof" json:"line,omitempty"` // line number for inline comments
 	CreatedAt     *timestamp.Timestamp   `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamp.Timestamp   `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CommitSha     *string                `protobuf:"bytes,8,opt,name=commit_sha,json=commitSha,proto3,oneof" json:"commit_sha,omitempty"` // commit SHA when the comment was created
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8387,6 +8388,13 @@ func (x *PRCommentResponse) GetUpdatedAt() *timestamp.Timestamp {
 	return nil
 }
 
+func (x *PRCommentResponse) GetCommitSha() string {
+	if x != nil && x.CommitSha != nil {
+		return *x.CommitSha
+	}
+	return ""
+}
+
 type CreatePRCommentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Owner         string                 `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
@@ -8395,6 +8403,7 @@ type CreatePRCommentRequest struct {
 	Body          string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
 	Path          *string                `protobuf:"bytes,5,opt,name=path,proto3,oneof" json:"path,omitempty"`
 	Line          *int32                 `protobuf:"varint,6,opt,name=line,proto3,oneof" json:"line,omitempty"`
+	CommitSha     *string                `protobuf:"bytes,7,opt,name=commit_sha,json=commitSha,proto3,oneof" json:"commit_sha,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -8469,6 +8478,13 @@ func (x *CreatePRCommentRequest) GetLine() int32 {
 		return *x.Line
 	}
 	return 0
+}
+
+func (x *CreatePRCommentRequest) GetCommitSha() string {
+	if x != nil && x.CommitSha != nil {
+		return *x.CommitSha
+	}
+	return ""
 }
 
 type ListPRCommentsRequest struct {
@@ -10191,6 +10207,246 @@ func (x *RemovePRAssigneeRequest) GetUsername() string {
 	return ""
 }
 
+type GetPRMergeEligibilityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Owner         string                 `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	Repo          string                 `protobuf:"bytes,2,opt,name=repo,proto3" json:"repo,omitempty"`
+	Number        int32                  `protobuf:"varint,3,opt,name=number,proto3" json:"number,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPRMergeEligibilityRequest) Reset() {
+	*x = GetPRMergeEligibilityRequest{}
+	mi := &file_backend_api_proto_msgTypes[155]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPRMergeEligibilityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPRMergeEligibilityRequest) ProtoMessage() {}
+
+func (x *GetPRMergeEligibilityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_api_proto_msgTypes[155]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPRMergeEligibilityRequest.ProtoReflect.Descriptor instead.
+func (*GetPRMergeEligibilityRequest) Descriptor() ([]byte, []int) {
+	return file_backend_api_proto_rawDescGZIP(), []int{155}
+}
+
+func (x *GetPRMergeEligibilityRequest) GetOwner() string {
+	if x != nil {
+		return x.Owner
+	}
+	return ""
+}
+
+func (x *GetPRMergeEligibilityRequest) GetRepo() string {
+	if x != nil {
+		return x.Repo
+	}
+	return ""
+}
+
+func (x *GetPRMergeEligibilityRequest) GetNumber() int32 {
+	if x != nil {
+		return x.Number
+	}
+	return 0
+}
+
+type PRMergeEligibilityResponse struct {
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	CanMerge                bool                   `protobuf:"varint,1,opt,name=can_merge,json=canMerge,proto3" json:"can_merge,omitempty"`
+	Reason                  string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	RequiredApprovals       int32                  `protobuf:"varint,3,opt,name=required_approvals,json=requiredApprovals,proto3" json:"required_approvals,omitempty"`
+	CurrentApprovals        int32                  `protobuf:"varint,4,opt,name=current_approvals,json=currentApprovals,proto3" json:"current_approvals,omitempty"`
+	BlockedByChangesRequest bool                   `protobuf:"varint,5,opt,name=blocked_by_changes_request,json=blockedByChangesRequest,proto3" json:"blocked_by_changes_request,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *PRMergeEligibilityResponse) Reset() {
+	*x = PRMergeEligibilityResponse{}
+	mi := &file_backend_api_proto_msgTypes[156]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PRMergeEligibilityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PRMergeEligibilityResponse) ProtoMessage() {}
+
+func (x *PRMergeEligibilityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_api_proto_msgTypes[156]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PRMergeEligibilityResponse.ProtoReflect.Descriptor instead.
+func (*PRMergeEligibilityResponse) Descriptor() ([]byte, []int) {
+	return file_backend_api_proto_rawDescGZIP(), []int{156}
+}
+
+func (x *PRMergeEligibilityResponse) GetCanMerge() bool {
+	if x != nil {
+		return x.CanMerge
+	}
+	return false
+}
+
+func (x *PRMergeEligibilityResponse) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *PRMergeEligibilityResponse) GetRequiredApprovals() int32 {
+	if x != nil {
+		return x.RequiredApprovals
+	}
+	return 0
+}
+
+func (x *PRMergeEligibilityResponse) GetCurrentApprovals() int32 {
+	if x != nil {
+		return x.CurrentApprovals
+	}
+	return 0
+}
+
+func (x *PRMergeEligibilityResponse) GetBlockedByChangesRequest() bool {
+	if x != nil {
+		return x.BlockedByChangesRequest
+	}
+	return false
+}
+
+type BranchPushRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Owner         string                 `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	Repo          string                 `protobuf:"bytes,2,opt,name=repo,proto3" json:"repo,omitempty"`
+	Branch        string                 `protobuf:"bytes,3,opt,name=branch,proto3" json:"branch,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BranchPushRequest) Reset() {
+	*x = BranchPushRequest{}
+	mi := &file_backend_api_proto_msgTypes[157]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BranchPushRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BranchPushRequest) ProtoMessage() {}
+
+func (x *BranchPushRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_api_proto_msgTypes[157]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BranchPushRequest.ProtoReflect.Descriptor instead.
+func (*BranchPushRequest) Descriptor() ([]byte, []int) {
+	return file_backend_api_proto_rawDescGZIP(), []int{157}
+}
+
+func (x *BranchPushRequest) GetOwner() string {
+	if x != nil {
+		return x.Owner
+	}
+	return ""
+}
+
+func (x *BranchPushRequest) GetRepo() string {
+	if x != nil {
+		return x.Repo
+	}
+	return ""
+}
+
+func (x *BranchPushRequest) GetBranch() string {
+	if x != nil {
+		return x.Branch
+	}
+	return ""
+}
+
+type BranchPushResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PrNumbers     []int32                `protobuf:"varint,1,rep,packed,name=pr_numbers,json=prNumbers,proto3" json:"pr_numbers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BranchPushResponse) Reset() {
+	*x = BranchPushResponse{}
+	mi := &file_backend_api_proto_msgTypes[158]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BranchPushResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BranchPushResponse) ProtoMessage() {}
+
+func (x *BranchPushResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_backend_api_proto_msgTypes[158]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BranchPushResponse.ProtoReflect.Descriptor instead.
+func (*BranchPushResponse) Descriptor() ([]byte, []int) {
+	return file_backend_api_proto_rawDescGZIP(), []int{158}
+}
+
+func (x *BranchPushResponse) GetPrNumbers() []int32 {
+	if x != nil {
+		return x.PrNumbers
+	}
+	return nil
+}
+
 type WebhookResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -10206,7 +10462,7 @@ type WebhookResponse struct {
 
 func (x *WebhookResponse) Reset() {
 	*x = WebhookResponse{}
-	mi := &file_backend_api_proto_msgTypes[155]
+	mi := &file_backend_api_proto_msgTypes[159]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10218,7 +10474,7 @@ func (x *WebhookResponse) String() string {
 func (*WebhookResponse) ProtoMessage() {}
 
 func (x *WebhookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[155]
+	mi := &file_backend_api_proto_msgTypes[159]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10231,7 +10487,7 @@ func (x *WebhookResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WebhookResponse.ProtoReflect.Descriptor instead.
 func (*WebhookResponse) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{155}
+	return file_backend_api_proto_rawDescGZIP(), []int{159}
 }
 
 func (x *WebhookResponse) GetId() uint64 {
@@ -10298,7 +10554,7 @@ type CreateWebhookRequest struct {
 
 func (x *CreateWebhookRequest) Reset() {
 	*x = CreateWebhookRequest{}
-	mi := &file_backend_api_proto_msgTypes[156]
+	mi := &file_backend_api_proto_msgTypes[160]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10310,7 +10566,7 @@ func (x *CreateWebhookRequest) String() string {
 func (*CreateWebhookRequest) ProtoMessage() {}
 
 func (x *CreateWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[156]
+	mi := &file_backend_api_proto_msgTypes[160]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10323,7 +10579,7 @@ func (x *CreateWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateWebhookRequest.ProtoReflect.Descriptor instead.
 func (*CreateWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{156}
+	return file_backend_api_proto_rawDescGZIP(), []int{160}
 }
 
 func (x *CreateWebhookRequest) GetOwner() string {
@@ -10386,7 +10642,7 @@ type GetWebhookRequest struct {
 
 func (x *GetWebhookRequest) Reset() {
 	*x = GetWebhookRequest{}
-	mi := &file_backend_api_proto_msgTypes[157]
+	mi := &file_backend_api_proto_msgTypes[161]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10398,7 +10654,7 @@ func (x *GetWebhookRequest) String() string {
 func (*GetWebhookRequest) ProtoMessage() {}
 
 func (x *GetWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[157]
+	mi := &file_backend_api_proto_msgTypes[161]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10411,7 +10667,7 @@ func (x *GetWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetWebhookRequest.ProtoReflect.Descriptor instead.
 func (*GetWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{157}
+	return file_backend_api_proto_rawDescGZIP(), []int{161}
 }
 
 func (x *GetWebhookRequest) GetOwner() string {
@@ -10445,7 +10701,7 @@ type ListWebhooksRequest struct {
 
 func (x *ListWebhooksRequest) Reset() {
 	*x = ListWebhooksRequest{}
-	mi := &file_backend_api_proto_msgTypes[158]
+	mi := &file_backend_api_proto_msgTypes[162]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10457,7 +10713,7 @@ func (x *ListWebhooksRequest) String() string {
 func (*ListWebhooksRequest) ProtoMessage() {}
 
 func (x *ListWebhooksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[158]
+	mi := &file_backend_api_proto_msgTypes[162]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10470,7 +10726,7 @@ func (x *ListWebhooksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWebhooksRequest.ProtoReflect.Descriptor instead.
 func (*ListWebhooksRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{158}
+	return file_backend_api_proto_rawDescGZIP(), []int{162}
 }
 
 func (x *ListWebhooksRequest) GetOwner() string {
@@ -10496,7 +10752,7 @@ type ListWebhooksResponse struct {
 
 func (x *ListWebhooksResponse) Reset() {
 	*x = ListWebhooksResponse{}
-	mi := &file_backend_api_proto_msgTypes[159]
+	mi := &file_backend_api_proto_msgTypes[163]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10508,7 +10764,7 @@ func (x *ListWebhooksResponse) String() string {
 func (*ListWebhooksResponse) ProtoMessage() {}
 
 func (x *ListWebhooksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[159]
+	mi := &file_backend_api_proto_msgTypes[163]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10521,7 +10777,7 @@ func (x *ListWebhooksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListWebhooksResponse.ProtoReflect.Descriptor instead.
 func (*ListWebhooksResponse) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{159}
+	return file_backend_api_proto_rawDescGZIP(), []int{163}
 }
 
 func (x *ListWebhooksResponse) GetWebhooks() []*WebhookResponse {
@@ -10547,7 +10803,7 @@ type UpdateWebhookRequest struct {
 
 func (x *UpdateWebhookRequest) Reset() {
 	*x = UpdateWebhookRequest{}
-	mi := &file_backend_api_proto_msgTypes[160]
+	mi := &file_backend_api_proto_msgTypes[164]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10559,7 +10815,7 @@ func (x *UpdateWebhookRequest) String() string {
 func (*UpdateWebhookRequest) ProtoMessage() {}
 
 func (x *UpdateWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[160]
+	mi := &file_backend_api_proto_msgTypes[164]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10572,7 +10828,7 @@ func (x *UpdateWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateWebhookRequest.ProtoReflect.Descriptor instead.
 func (*UpdateWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{160}
+	return file_backend_api_proto_rawDescGZIP(), []int{164}
 }
 
 func (x *UpdateWebhookRequest) GetOwner() string {
@@ -10642,7 +10898,7 @@ type DeleteWebhookRequest struct {
 
 func (x *DeleteWebhookRequest) Reset() {
 	*x = DeleteWebhookRequest{}
-	mi := &file_backend_api_proto_msgTypes[161]
+	mi := &file_backend_api_proto_msgTypes[165]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10654,7 +10910,7 @@ func (x *DeleteWebhookRequest) String() string {
 func (*DeleteWebhookRequest) ProtoMessage() {}
 
 func (x *DeleteWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[161]
+	mi := &file_backend_api_proto_msgTypes[165]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10667,7 +10923,7 @@ func (x *DeleteWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteWebhookRequest.ProtoReflect.Descriptor instead.
 func (*DeleteWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{161}
+	return file_backend_api_proto_rawDescGZIP(), []int{165}
 }
 
 func (x *DeleteWebhookRequest) GetOwner() string {
@@ -10702,7 +10958,7 @@ type PingWebhookRequest struct {
 
 func (x *PingWebhookRequest) Reset() {
 	*x = PingWebhookRequest{}
-	mi := &file_backend_api_proto_msgTypes[162]
+	mi := &file_backend_api_proto_msgTypes[166]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10714,7 +10970,7 @@ func (x *PingWebhookRequest) String() string {
 func (*PingWebhookRequest) ProtoMessage() {}
 
 func (x *PingWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[162]
+	mi := &file_backend_api_proto_msgTypes[166]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10727,7 +10983,7 @@ func (x *PingWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingWebhookRequest.ProtoReflect.Descriptor instead.
 func (*PingWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{162}
+	return file_backend_api_proto_rawDescGZIP(), []int{166}
 }
 
 func (x *PingWebhookRequest) GetOwner() string {
@@ -10765,7 +11021,7 @@ type SearchReposRequest struct {
 
 func (x *SearchReposRequest) Reset() {
 	*x = SearchReposRequest{}
-	mi := &file_backend_api_proto_msgTypes[163]
+	mi := &file_backend_api_proto_msgTypes[167]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10777,7 +11033,7 @@ func (x *SearchReposRequest) String() string {
 func (*SearchReposRequest) ProtoMessage() {}
 
 func (x *SearchReposRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[163]
+	mi := &file_backend_api_proto_msgTypes[167]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10790,7 +11046,7 @@ func (x *SearchReposRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchReposRequest.ProtoReflect.Descriptor instead.
 func (*SearchReposRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{163}
+	return file_backend_api_proto_rawDescGZIP(), []int{167}
 }
 
 func (x *SearchReposRequest) GetQuery() string {
@@ -10848,7 +11104,7 @@ type SearchUsersRequest struct {
 
 func (x *SearchUsersRequest) Reset() {
 	*x = SearchUsersRequest{}
-	mi := &file_backend_api_proto_msgTypes[164]
+	mi := &file_backend_api_proto_msgTypes[168]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10860,7 +11116,7 @@ func (x *SearchUsersRequest) String() string {
 func (*SearchUsersRequest) ProtoMessage() {}
 
 func (x *SearchUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[164]
+	mi := &file_backend_api_proto_msgTypes[168]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10873,7 +11129,7 @@ func (x *SearchUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchUsersRequest.ProtoReflect.Descriptor instead.
 func (*SearchUsersRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{164}
+	return file_backend_api_proto_rawDescGZIP(), []int{168}
 }
 
 func (x *SearchUsersRequest) GetQuery() string {
@@ -10930,7 +11186,7 @@ type SearchIssuesRequest struct {
 
 func (x *SearchIssuesRequest) Reset() {
 	*x = SearchIssuesRequest{}
-	mi := &file_backend_api_proto_msgTypes[165]
+	mi := &file_backend_api_proto_msgTypes[169]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -10942,7 +11198,7 @@ func (x *SearchIssuesRequest) String() string {
 func (*SearchIssuesRequest) ProtoMessage() {}
 
 func (x *SearchIssuesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_backend_api_proto_msgTypes[165]
+	mi := &file_backend_api_proto_msgTypes[169]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -10955,7 +11211,7 @@ func (x *SearchIssuesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchIssuesRequest.ProtoReflect.Descriptor instead.
 func (*SearchIssuesRequest) Descriptor() ([]byte, []int) {
-	return file_backend_api_proto_rawDescGZIP(), []int{165}
+	return file_backend_api_proto_rawDescGZIP(), []int{169}
 }
 
 func (x *SearchIssuesRequest) GetQuery() string {
@@ -11757,7 +12013,7 @@ const file_backend_api_proto_rawDesc = "" +
 	"\x10GetPRDiffRequest\x12\x14\n" +
 	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x12\n" +
 	"\x04repo\x18\x02 \x01(\tR\x04repo\x12\x16\n" +
-	"\x06number\x18\x03 \x01(\x05R\x06number\"\x9c\x02\n" +
+	"\x06number\x18\x03 \x01(\x05R\x06number\"\xcf\x02\n" +
 	"\x11PRCommentResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x12\n" +
 	"\x04body\x18\x02 \x01(\tR\x04body\x12)\n" +
@@ -11767,18 +12023,24 @@ const file_backend_api_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\a\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\"\n" +
+	"\n" +
+	"commit_sha\x18\b \x01(\tH\x02R\tcommitSha\x88\x01\x01B\a\n" +
 	"\x05_pathB\a\n" +
-	"\x05_line\"\xb2\x01\n" +
+	"\x05_lineB\r\n" +
+	"\v_commit_sha\"\xe5\x01\n" +
 	"\x16CreatePRCommentRequest\x12\x14\n" +
 	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x12\n" +
 	"\x04repo\x18\x02 \x01(\tR\x04repo\x12\x16\n" +
 	"\x06number\x18\x03 \x01(\x05R\x06number\x12\x12\n" +
 	"\x04body\x18\x04 \x01(\tR\x04body\x12\x17\n" +
 	"\x04path\x18\x05 \x01(\tH\x00R\x04path\x88\x01\x01\x12\x17\n" +
-	"\x04line\x18\x06 \x01(\x05H\x01R\x04line\x88\x01\x01B\a\n" +
+	"\x04line\x18\x06 \x01(\x05H\x01R\x04line\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"commit_sha\x18\a \x01(\tH\x02R\tcommitSha\x88\x01\x01B\a\n" +
 	"\x05_pathB\a\n" +
-	"\x05_line\"Y\n" +
+	"\x05_lineB\r\n" +
+	"\v_commit_sha\"Y\n" +
 	"\x15ListPRCommentsRequest\x12\x14\n" +
 	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x12\n" +
 	"\x04repo\x18\x02 \x01(\tR\x04repo\x12\x16\n" +
@@ -11915,7 +12177,24 @@ const file_backend_api_proto_rawDesc = "" +
 	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x12\n" +
 	"\x04repo\x18\x02 \x01(\tR\x04repo\x12\x16\n" +
 	"\x06number\x18\x03 \x01(\x05R\x06number\x12\x1a\n" +
-	"\busername\x18\x04 \x01(\tR\busername\"\xfc\x01\n" +
+	"\busername\x18\x04 \x01(\tR\busername\"`\n" +
+	"\x1cGetPRMergeEligibilityRequest\x12\x14\n" +
+	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x12\n" +
+	"\x04repo\x18\x02 \x01(\tR\x04repo\x12\x16\n" +
+	"\x06number\x18\x03 \x01(\x05R\x06number\"\xea\x01\n" +
+	"\x1aPRMergeEligibilityResponse\x12\x1b\n" +
+	"\tcan_merge\x18\x01 \x01(\bR\bcanMerge\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12-\n" +
+	"\x12required_approvals\x18\x03 \x01(\x05R\x11requiredApprovals\x12+\n" +
+	"\x11current_approvals\x18\x04 \x01(\x05R\x10currentApprovals\x12;\n" +
+	"\x1ablocked_by_changes_request\x18\x05 \x01(\bR\x17blockedByChangesRequest\"U\n" +
+	"\x11BranchPushRequest\x12\x14\n" +
+	"\x05owner\x18\x01 \x01(\tR\x05owner\x12\x12\n" +
+	"\x04repo\x18\x02 \x01(\tR\x04repo\x12\x16\n" +
+	"\x06branch\x18\x03 \x01(\tR\x06branch\"3\n" +
+	"\x12BranchPushResponse\x12\x1d\n" +
+	"\n" +
+	"pr_numbers\x18\x01 \x03(\x05R\tprNumbers\"\xfc\x01\n" +
 	"\x0fWebhookResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x16\n" +
@@ -12017,7 +12296,7 @@ const file_backend_api_proto_rawDesc = "" +
 	"\x05_sortB\b\n" +
 	"\x06_orderB\a\n" +
 	"\x05_pageB\v\n" +
-	"\t_per_page2\xb3=\n" +
+	"\t_per_page2\xd5>\n" +
 	"\n" +
 	"GytService\x123\n" +
 	"\bRegister\x12\x14.gyt.RegisterRequest\x1a\x11.gyt.AuthResponse\x12-\n" +
@@ -12126,6 +12405,8 @@ const file_backend_api_proto_rawDesc = "" +
 	"\rRemovePRLabel\x12\x19.gyt.RemovePRLabelRequest\x1a\x16.google.protobuf.Empty\x12B\n" +
 	"\rAddPRAssignee\x12\x19.gyt.AddPRAssigneeRequest\x1a\x16.google.protobuf.Empty\x12H\n" +
 	"\x10RemovePRAssignee\x12\x1c.gyt.RemovePRAssigneeRequest\x1a\x16.google.protobuf.Empty\x12[\n" +
+	"\x15GetPRMergeEligibility\x12!.gyt.GetPRMergeEligibilityRequest\x1a\x1f.gyt.PRMergeEligibilityResponse\x12C\n" +
+	"\x10HandleBranchPush\x12\x16.gyt.BranchPushRequest\x1a\x17.gyt.BranchPushResponse\x12[\n" +
 	"\x16CreateBranchProtection\x12\".gyt.CreateBranchProtectionRequest\x1a\x1d.gyt.BranchProtectionResponse\x12U\n" +
 	"\x13GetBranchProtection\x12\x1f.gyt.GetBranchProtectionRequest\x1a\x1d.gyt.BranchProtectionResponse\x12^\n" +
 	"\x15ListBranchProtections\x12!.gyt.ListBranchProtectionsRequest\x1a\".gyt.ListBranchProtectionsResponse\x12[\n" +
@@ -12154,7 +12435,7 @@ func file_backend_api_proto_rawDescGZIP() []byte {
 	return file_backend_api_proto_rawDescData
 }
 
-var file_backend_api_proto_msgTypes = make([]protoimpl.MessageInfo, 166)
+var file_backend_api_proto_msgTypes = make([]protoimpl.MessageInfo, 170)
 var file_backend_api_proto_goTypes = []any{
 	(*RegisterRequest)(nil),               // 0: gyt.RegisterRequest
 	(*LoginRequest)(nil),                  // 1: gyt.LoginRequest
@@ -12311,92 +12592,96 @@ var file_backend_api_proto_goTypes = []any{
 	(*RemovePRLabelRequest)(nil),          // 152: gyt.RemovePRLabelRequest
 	(*AddPRAssigneeRequest)(nil),          // 153: gyt.AddPRAssigneeRequest
 	(*RemovePRAssigneeRequest)(nil),       // 154: gyt.RemovePRAssigneeRequest
-	(*WebhookResponse)(nil),               // 155: gyt.WebhookResponse
-	(*CreateWebhookRequest)(nil),          // 156: gyt.CreateWebhookRequest
-	(*GetWebhookRequest)(nil),             // 157: gyt.GetWebhookRequest
-	(*ListWebhooksRequest)(nil),           // 158: gyt.ListWebhooksRequest
-	(*ListWebhooksResponse)(nil),          // 159: gyt.ListWebhooksResponse
-	(*UpdateWebhookRequest)(nil),          // 160: gyt.UpdateWebhookRequest
-	(*DeleteWebhookRequest)(nil),          // 161: gyt.DeleteWebhookRequest
-	(*PingWebhookRequest)(nil),            // 162: gyt.PingWebhookRequest
-	(*SearchReposRequest)(nil),            // 163: gyt.SearchReposRequest
-	(*SearchUsersRequest)(nil),            // 164: gyt.SearchUsersRequest
-	(*SearchIssuesRequest)(nil),           // 165: gyt.SearchIssuesRequest
-	(*timestamp.Timestamp)(nil),           // 166: google.protobuf.Timestamp
-	(*empty.Empty)(nil),                   // 167: google.protobuf.Empty
+	(*GetPRMergeEligibilityRequest)(nil),  // 155: gyt.GetPRMergeEligibilityRequest
+	(*PRMergeEligibilityResponse)(nil),    // 156: gyt.PRMergeEligibilityResponse
+	(*BranchPushRequest)(nil),             // 157: gyt.BranchPushRequest
+	(*BranchPushResponse)(nil),            // 158: gyt.BranchPushResponse
+	(*WebhookResponse)(nil),               // 159: gyt.WebhookResponse
+	(*CreateWebhookRequest)(nil),          // 160: gyt.CreateWebhookRequest
+	(*GetWebhookRequest)(nil),             // 161: gyt.GetWebhookRequest
+	(*ListWebhooksRequest)(nil),           // 162: gyt.ListWebhooksRequest
+	(*ListWebhooksResponse)(nil),          // 163: gyt.ListWebhooksResponse
+	(*UpdateWebhookRequest)(nil),          // 164: gyt.UpdateWebhookRequest
+	(*DeleteWebhookRequest)(nil),          // 165: gyt.DeleteWebhookRequest
+	(*PingWebhookRequest)(nil),            // 166: gyt.PingWebhookRequest
+	(*SearchReposRequest)(nil),            // 167: gyt.SearchReposRequest
+	(*SearchUsersRequest)(nil),            // 168: gyt.SearchUsersRequest
+	(*SearchIssuesRequest)(nil),           // 169: gyt.SearchIssuesRequest
+	(*timestamp.Timestamp)(nil),           // 170: google.protobuf.Timestamp
+	(*empty.Empty)(nil),                   // 171: google.protobuf.Empty
 }
 var file_backend_api_proto_depIdxs = []int32{
 	4,   // 0: gyt.AuthResponse.user:type_name -> gyt.UserResponse
-	166, // 1: gyt.UserResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 1: gyt.UserResponse.created_at:type_name -> google.protobuf.Timestamp
 	4,   // 2: gyt.ListUsersResponse.users:type_name -> gyt.UserResponse
-	166, // 3: gyt.SSHKeyResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 3: gyt.SSHKeyResponse.created_at:type_name -> google.protobuf.Timestamp
 	10,  // 4: gyt.ListSSHKeysResponse.keys:type_name -> gyt.SSHKeyResponse
-	166, // 5: gyt.RepositoryResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 6: gyt.RepositoryResponse.updated_at:type_name -> google.protobuf.Timestamp
+	170, // 5: gyt.RepositoryResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 6: gyt.RepositoryResponse.updated_at:type_name -> google.protobuf.Timestamp
 	15,  // 7: gyt.ListReposResponse.repositories:type_name -> gyt.RepositoryResponse
 	26,  // 8: gyt.RepoTreeResponse.entries:type_name -> gyt.TreeEntryResponse
 	31,  // 9: gyt.ListBranchesResponse.branches:type_name -> gyt.BranchResponse
 	39,  // 10: gyt.ListTagsResponse.tags:type_name -> gyt.TagResponse
 	39,  // 11: gyt.TagDetailResponse.tag:type_name -> gyt.TagResponse
 	45,  // 12: gyt.TagDetailResponse.commit:type_name -> gyt.CommitResponse
-	166, // 13: gyt.AuthorResponse.when:type_name -> google.protobuf.Timestamp
+	170, // 13: gyt.AuthorResponse.when:type_name -> google.protobuf.Timestamp
 	44,  // 14: gyt.CommitResponse.author:type_name -> gyt.AuthorResponse
 	44,  // 15: gyt.CommitResponse.committer:type_name -> gyt.AuthorResponse
 	45,  // 16: gyt.ListCommitsResponse.commits:type_name -> gyt.CommitResponse
 	45,  // 17: gyt.CommitDetailResponse.commit:type_name -> gyt.CommitResponse
 	49,  // 18: gyt.CommitDetailResponse.files:type_name -> gyt.FileDiffResponse
-	166, // 19: gyt.RepoStatsResponse.last_commit:type_name -> google.protobuf.Timestamp
+	170, // 19: gyt.RepoStatsResponse.last_commit:type_name -> google.protobuf.Timestamp
 	45,  // 20: gyt.CompareResponse.commits:type_name -> gyt.CommitResponse
 	49,  // 21: gyt.CompareResponse.files:type_name -> gyt.FileDiffResponse
 	45,  // 22: gyt.GetFileHistoryResponse.commits:type_name -> gyt.CommitResponse
 	63,  // 23: gyt.ListCollaboratorsResponse.collaborators:type_name -> gyt.CollaboratorResponse
-	166, // 24: gyt.OrganizationResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 24: gyt.OrganizationResponse.created_at:type_name -> google.protobuf.Timestamp
 	69,  // 25: gyt.ListOrgsResponse.organizations:type_name -> gyt.OrganizationResponse
 	4,   // 26: gyt.OrgMemberResponse.user:type_name -> gyt.UserResponse
-	166, // 27: gyt.OrgMemberResponse.joined_at:type_name -> google.protobuf.Timestamp
+	170, // 27: gyt.OrgMemberResponse.joined_at:type_name -> google.protobuf.Timestamp
 	77,  // 28: gyt.ListOrgMembersResponse.members:type_name -> gyt.OrgMemberResponse
 	4,   // 29: gyt.ListStargazersResponse.users:type_name -> gyt.UserResponse
 	91,  // 30: gyt.ListLabelsResponse.labels:type_name -> gyt.LabelResponse
 	4,   // 31: gyt.IssueResponse.author:type_name -> gyt.UserResponse
 	4,   // 32: gyt.IssueResponse.assignees:type_name -> gyt.UserResponse
 	91,  // 33: gyt.IssueResponse.labels:type_name -> gyt.LabelResponse
-	166, // 34: gyt.IssueResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 35: gyt.IssueResponse.updated_at:type_name -> google.protobuf.Timestamp
-	166, // 36: gyt.IssueResponse.closed_at:type_name -> google.protobuf.Timestamp
+	170, // 34: gyt.IssueResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 35: gyt.IssueResponse.updated_at:type_name -> google.protobuf.Timestamp
+	170, // 36: gyt.IssueResponse.closed_at:type_name -> google.protobuf.Timestamp
 	98,  // 37: gyt.ListIssuesResponse.issues:type_name -> gyt.IssueResponse
 	4,   // 38: gyt.IssueCommentResponse.author:type_name -> gyt.UserResponse
-	166, // 39: gyt.IssueCommentResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 40: gyt.IssueCommentResponse.updated_at:type_name -> google.protobuf.Timestamp
+	170, // 39: gyt.IssueCommentResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 40: gyt.IssueCommentResponse.updated_at:type_name -> google.protobuf.Timestamp
 	110, // 41: gyt.ListIssueCommentsResponse.comments:type_name -> gyt.IssueCommentResponse
 	4,   // 42: gyt.PullRequestResponse.author:type_name -> gyt.UserResponse
 	4,   // 43: gyt.PullRequestResponse.assignees:type_name -> gyt.UserResponse
 	91,  // 44: gyt.PullRequestResponse.labels:type_name -> gyt.LabelResponse
-	166, // 45: gyt.PullRequestResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 46: gyt.PullRequestResponse.updated_at:type_name -> google.protobuf.Timestamp
-	166, // 47: gyt.PullRequestResponse.merged_at:type_name -> google.protobuf.Timestamp
+	170, // 45: gyt.PullRequestResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 46: gyt.PullRequestResponse.updated_at:type_name -> google.protobuf.Timestamp
+	170, // 47: gyt.PullRequestResponse.merged_at:type_name -> google.protobuf.Timestamp
 	116, // 48: gyt.ListPRsResponse.pull_requests:type_name -> gyt.PullRequestResponse
 	4,   // 49: gyt.PRCommentResponse.author:type_name -> gyt.UserResponse
-	166, // 50: gyt.PRCommentResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 51: gyt.PRCommentResponse.updated_at:type_name -> google.protobuf.Timestamp
+	170, // 50: gyt.PRCommentResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 51: gyt.PRCommentResponse.updated_at:type_name -> google.protobuf.Timestamp
 	127, // 52: gyt.ListPRCommentsResponse.comments:type_name -> gyt.PRCommentResponse
 	4,   // 53: gyt.PRReviewResponse.reviewer:type_name -> gyt.UserResponse
-	166, // 54: gyt.PRReviewResponse.submitted_at:type_name -> google.protobuf.Timestamp
-	166, // 55: gyt.BranchProtectionResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 56: gyt.BranchProtectionResponse.updated_at:type_name -> google.protobuf.Timestamp
+	170, // 54: gyt.PRReviewResponse.submitted_at:type_name -> google.protobuf.Timestamp
+	170, // 55: gyt.BranchProtectionResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 56: gyt.BranchProtectionResponse.updated_at:type_name -> google.protobuf.Timestamp
 	136, // 57: gyt.ListBranchProtectionsResponse.rules:type_name -> gyt.BranchProtectionResponse
 	133, // 58: gyt.ListPRReviewsResponse.reviews:type_name -> gyt.PRReviewResponse
 	4,   // 59: gyt.ReviewRequestResponse.reviewer:type_name -> gyt.UserResponse
 	4,   // 60: gyt.ReviewRequestResponse.requested_by:type_name -> gyt.UserResponse
-	166, // 61: gyt.ReviewRequestResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 61: gyt.ReviewRequestResponse.created_at:type_name -> google.protobuf.Timestamp
 	149, // 62: gyt.ListReviewRequestsResponse.requests:type_name -> gyt.ReviewRequestResponse
-	166, // 63: gyt.WebhookResponse.created_at:type_name -> google.protobuf.Timestamp
-	166, // 64: gyt.WebhookResponse.updated_at:type_name -> google.protobuf.Timestamp
-	155, // 65: gyt.ListWebhooksResponse.webhooks:type_name -> gyt.WebhookResponse
+	170, // 63: gyt.WebhookResponse.created_at:type_name -> google.protobuf.Timestamp
+	170, // 64: gyt.WebhookResponse.updated_at:type_name -> google.protobuf.Timestamp
+	159, // 65: gyt.ListWebhooksResponse.webhooks:type_name -> gyt.WebhookResponse
 	0,   // 66: gyt.GytService.Register:input_type -> gyt.RegisterRequest
 	1,   // 67: gyt.GytService.Login:input_type -> gyt.LoginRequest
 	2,   // 68: gyt.GytService.RefreshToken:input_type -> gyt.RefreshTokenRequest
 	5,   // 69: gyt.GytService.GetUser:input_type -> gyt.GetUserRequest
-	167, // 70: gyt.GytService.GetCurrentUser:input_type -> google.protobuf.Empty
+	171, // 70: gyt.GytService.GetCurrentUser:input_type -> google.protobuf.Empty
 	6,   // 71: gyt.GytService.UpdateUser:input_type -> gyt.UpdateUserRequest
 	7,   // 72: gyt.GytService.DeleteUser:input_type -> gyt.DeleteUserRequest
 	8,   // 73: gyt.GytService.ListUsers:input_type -> gyt.ListUsersRequest
@@ -12492,136 +12777,140 @@ var file_backend_api_proto_depIdxs = []int32{
 	152, // 163: gyt.GytService.RemovePRLabel:input_type -> gyt.RemovePRLabelRequest
 	153, // 164: gyt.GytService.AddPRAssignee:input_type -> gyt.AddPRAssigneeRequest
 	154, // 165: gyt.GytService.RemovePRAssignee:input_type -> gyt.RemovePRAssigneeRequest
-	137, // 166: gyt.GytService.CreateBranchProtection:input_type -> gyt.CreateBranchProtectionRequest
-	138, // 167: gyt.GytService.GetBranchProtection:input_type -> gyt.GetBranchProtectionRequest
-	139, // 168: gyt.GytService.ListBranchProtections:input_type -> gyt.ListBranchProtectionsRequest
-	141, // 169: gyt.GytService.UpdateBranchProtection:input_type -> gyt.UpdateBranchProtectionRequest
-	142, // 170: gyt.GytService.DeleteBranchProtection:input_type -> gyt.DeleteBranchProtectionRequest
-	156, // 171: gyt.GytService.CreateWebhook:input_type -> gyt.CreateWebhookRequest
-	157, // 172: gyt.GytService.GetWebhook:input_type -> gyt.GetWebhookRequest
-	158, // 173: gyt.GytService.ListWebhooks:input_type -> gyt.ListWebhooksRequest
-	160, // 174: gyt.GytService.UpdateWebhook:input_type -> gyt.UpdateWebhookRequest
-	161, // 175: gyt.GytService.DeleteWebhook:input_type -> gyt.DeleteWebhookRequest
-	162, // 176: gyt.GytService.PingWebhook:input_type -> gyt.PingWebhookRequest
-	163, // 177: gyt.GytService.SearchRepositories:input_type -> gyt.SearchReposRequest
-	164, // 178: gyt.GytService.SearchUsers:input_type -> gyt.SearchUsersRequest
-	165, // 179: gyt.GytService.SearchIssues:input_type -> gyt.SearchIssuesRequest
-	3,   // 180: gyt.GytService.Register:output_type -> gyt.AuthResponse
-	3,   // 181: gyt.GytService.Login:output_type -> gyt.AuthResponse
-	3,   // 182: gyt.GytService.RefreshToken:output_type -> gyt.AuthResponse
-	4,   // 183: gyt.GytService.GetUser:output_type -> gyt.UserResponse
-	4,   // 184: gyt.GytService.GetCurrentUser:output_type -> gyt.UserResponse
-	4,   // 185: gyt.GytService.UpdateUser:output_type -> gyt.UserResponse
-	167, // 186: gyt.GytService.DeleteUser:output_type -> google.protobuf.Empty
-	9,   // 187: gyt.GytService.ListUsers:output_type -> gyt.ListUsersResponse
-	12,  // 188: gyt.GytService.ListSSHKeys:output_type -> gyt.ListSSHKeysResponse
-	10,  // 189: gyt.GytService.AddSSHKey:output_type -> gyt.SSHKeyResponse
-	167, // 190: gyt.GytService.DeleteSSHKey:output_type -> google.protobuf.Empty
-	15,  // 191: gyt.GytService.CreateRepository:output_type -> gyt.RepositoryResponse
-	15,  // 192: gyt.GytService.GetRepository:output_type -> gyt.RepositoryResponse
-	21,  // 193: gyt.GytService.ListRepositories:output_type -> gyt.ListReposResponse
-	21,  // 194: gyt.GytService.ListUserRepositories:output_type -> gyt.ListReposResponse
-	21,  // 195: gyt.GytService.ListOrgRepositories:output_type -> gyt.ListReposResponse
-	15,  // 196: gyt.GytService.UpdateRepository:output_type -> gyt.RepositoryResponse
-	167, // 197: gyt.GytService.DeleteRepository:output_type -> google.protobuf.Empty
-	15,  // 198: gyt.GytService.RenameRepository:output_type -> gyt.RepositoryResponse
-	27,  // 199: gyt.GytService.GetRepositoryTree:output_type -> gyt.RepoTreeResponse
-	29,  // 200: gyt.GytService.GetFileBlob:output_type -> gyt.FileBlobResponse
-	32,  // 201: gyt.GytService.ListBranches:output_type -> gyt.ListBranchesResponse
-	31,  // 202: gyt.GytService.CreateBranch:output_type -> gyt.BranchResponse
-	167, // 203: gyt.GytService.DeleteBranch:output_type -> google.protobuf.Empty
-	37,  // 204: gyt.GytService.GetDefaultBranch:output_type -> gyt.DefaultBranchResponse
-	37,  // 205: gyt.GytService.SetDefaultBranch:output_type -> gyt.DefaultBranchResponse
-	40,  // 206: gyt.GytService.ListTags:output_type -> gyt.ListTagsResponse
-	42,  // 207: gyt.GytService.CreateTag:output_type -> gyt.TagDetailResponse
-	167, // 208: gyt.GytService.DeleteTag:output_type -> google.protobuf.Empty
-	47,  // 209: gyt.GytService.ListCommits:output_type -> gyt.ListCommitsResponse
-	50,  // 210: gyt.GytService.GetCommit:output_type -> gyt.CommitDetailResponse
-	52,  // 211: gyt.GytService.GetRepositoryStats:output_type -> gyt.RepoStatsResponse
-	54,  // 212: gyt.GytService.GetCloneURLs:output_type -> gyt.CloneURLsResponse
-	57,  // 213: gyt.GytService.CompareBranches:output_type -> gyt.CompareResponse
-	57,  // 214: gyt.GytService.CompareCommits:output_type -> gyt.CompareResponse
-	59,  // 215: gyt.GytService.GetFileHistory:output_type -> gyt.GetFileHistoryResponse
-	47,  // 216: gyt.GytService.SearchCommits:output_type -> gyt.ListCommitsResponse
-	62,  // 217: gyt.GytService.CheckPath:output_type -> gyt.CheckPathResponse
-	65,  // 218: gyt.GytService.ListCollaborators:output_type -> gyt.ListCollaboratorsResponse
-	167, // 219: gyt.GytService.AddCollaborator:output_type -> google.protobuf.Empty
-	167, // 220: gyt.GytService.RemoveCollaborator:output_type -> google.protobuf.Empty
-	167, // 221: gyt.GytService.UpdateCollaborator:output_type -> google.protobuf.Empty
-	69,  // 222: gyt.GytService.CreateOrganization:output_type -> gyt.OrganizationResponse
-	69,  // 223: gyt.GytService.GetOrganization:output_type -> gyt.OrganizationResponse
-	74,  // 224: gyt.GytService.ListOrganizations:output_type -> gyt.ListOrgsResponse
-	74,  // 225: gyt.GytService.ListUserOrganizations:output_type -> gyt.ListOrgsResponse
-	69,  // 226: gyt.GytService.UpdateOrganization:output_type -> gyt.OrganizationResponse
-	167, // 227: gyt.GytService.DeleteOrganization:output_type -> google.protobuf.Empty
-	79,  // 228: gyt.GytService.ListOrgMembers:output_type -> gyt.ListOrgMembersResponse
-	77,  // 229: gyt.GytService.AddOrgMember:output_type -> gyt.OrgMemberResponse
-	77,  // 230: gyt.GytService.UpdateOrgMember:output_type -> gyt.OrgMemberResponse
-	167, // 231: gyt.GytService.RemoveOrgMember:output_type -> google.protobuf.Empty
-	77,  // 232: gyt.GytService.GetOrgMembership:output_type -> gyt.OrgMemberResponse
-	167, // 233: gyt.GytService.StarRepository:output_type -> google.protobuf.Empty
-	167, // 234: gyt.GytService.UnstarRepository:output_type -> google.protobuf.Empty
-	87,  // 235: gyt.GytService.CheckStar:output_type -> gyt.CheckStarResponse
-	89,  // 236: gyt.GytService.ListStargazers:output_type -> gyt.ListStargazersResponse
-	21,  // 237: gyt.GytService.ListStarredRepositories:output_type -> gyt.ListReposResponse
-	91,  // 238: gyt.GytService.CreateLabel:output_type -> gyt.LabelResponse
-	91,  // 239: gyt.GytService.GetLabel:output_type -> gyt.LabelResponse
-	95,  // 240: gyt.GytService.ListLabels:output_type -> gyt.ListLabelsResponse
-	91,  // 241: gyt.GytService.UpdateLabel:output_type -> gyt.LabelResponse
-	167, // 242: gyt.GytService.DeleteLabel:output_type -> google.protobuf.Empty
-	98,  // 243: gyt.GytService.CreateIssue:output_type -> gyt.IssueResponse
-	98,  // 244: gyt.GytService.GetIssue:output_type -> gyt.IssueResponse
-	102, // 245: gyt.GytService.ListIssues:output_type -> gyt.ListIssuesResponse
-	98,  // 246: gyt.GytService.UpdateIssue:output_type -> gyt.IssueResponse
-	98,  // 247: gyt.GytService.CloseIssue:output_type -> gyt.IssueResponse
-	98,  // 248: gyt.GytService.ReopenIssue:output_type -> gyt.IssueResponse
-	167, // 249: gyt.GytService.AddIssueLabel:output_type -> google.protobuf.Empty
-	167, // 250: gyt.GytService.RemoveIssueLabel:output_type -> google.protobuf.Empty
-	167, // 251: gyt.GytService.AddIssueAssignee:output_type -> google.protobuf.Empty
-	167, // 252: gyt.GytService.RemoveIssueAssignee:output_type -> google.protobuf.Empty
-	110, // 253: gyt.GytService.CreateIssueComment:output_type -> gyt.IssueCommentResponse
-	113, // 254: gyt.GytService.ListIssueComments:output_type -> gyt.ListIssueCommentsResponse
-	110, // 255: gyt.GytService.UpdateIssueComment:output_type -> gyt.IssueCommentResponse
-	167, // 256: gyt.GytService.DeleteIssueComment:output_type -> google.protobuf.Empty
-	116, // 257: gyt.GytService.CreatePullRequest:output_type -> gyt.PullRequestResponse
-	116, // 258: gyt.GytService.GetPullRequest:output_type -> gyt.PullRequestResponse
-	120, // 259: gyt.GytService.ListPullRequests:output_type -> gyt.ListPRsResponse
-	116, // 260: gyt.GytService.UpdatePullRequest:output_type -> gyt.PullRequestResponse
-	123, // 261: gyt.GytService.MergePullRequest:output_type -> gyt.MergePRResponse
-	116, // 262: gyt.GytService.ClosePullRequest:output_type -> gyt.PullRequestResponse
-	116, // 263: gyt.GytService.ReopenPullRequest:output_type -> gyt.PullRequestResponse
-	57,  // 264: gyt.GytService.GetPullRequestDiff:output_type -> gyt.CompareResponse
-	127, // 265: gyt.GytService.CreatePRComment:output_type -> gyt.PRCommentResponse
-	130, // 266: gyt.GytService.ListPRComments:output_type -> gyt.ListPRCommentsResponse
-	127, // 267: gyt.GytService.UpdatePRComment:output_type -> gyt.PRCommentResponse
-	167, // 268: gyt.GytService.DeletePRComment:output_type -> google.protobuf.Empty
-	133, // 269: gyt.GytService.CreatePRReview:output_type -> gyt.PRReviewResponse
-	145, // 270: gyt.GytService.ListPRReviews:output_type -> gyt.ListPRReviewsResponse
-	133, // 271: gyt.GytService.DismissReview:output_type -> gyt.PRReviewResponse
-	167, // 272: gyt.GytService.DismissStaleReviews:output_type -> google.protobuf.Empty
-	167, // 273: gyt.GytService.RequestReview:output_type -> google.protobuf.Empty
-	167, // 274: gyt.GytService.RemoveReviewRequest:output_type -> google.protobuf.Empty
-	150, // 275: gyt.GytService.ListReviewRequests:output_type -> gyt.ListReviewRequestsResponse
-	167, // 276: gyt.GytService.AddPRLabel:output_type -> google.protobuf.Empty
-	167, // 277: gyt.GytService.RemovePRLabel:output_type -> google.protobuf.Empty
-	167, // 278: gyt.GytService.AddPRAssignee:output_type -> google.protobuf.Empty
-	167, // 279: gyt.GytService.RemovePRAssignee:output_type -> google.protobuf.Empty
-	136, // 280: gyt.GytService.CreateBranchProtection:output_type -> gyt.BranchProtectionResponse
-	136, // 281: gyt.GytService.GetBranchProtection:output_type -> gyt.BranchProtectionResponse
-	140, // 282: gyt.GytService.ListBranchProtections:output_type -> gyt.ListBranchProtectionsResponse
-	136, // 283: gyt.GytService.UpdateBranchProtection:output_type -> gyt.BranchProtectionResponse
-	167, // 284: gyt.GytService.DeleteBranchProtection:output_type -> google.protobuf.Empty
-	155, // 285: gyt.GytService.CreateWebhook:output_type -> gyt.WebhookResponse
-	155, // 286: gyt.GytService.GetWebhook:output_type -> gyt.WebhookResponse
-	159, // 287: gyt.GytService.ListWebhooks:output_type -> gyt.ListWebhooksResponse
-	155, // 288: gyt.GytService.UpdateWebhook:output_type -> gyt.WebhookResponse
-	167, // 289: gyt.GytService.DeleteWebhook:output_type -> google.protobuf.Empty
-	167, // 290: gyt.GytService.PingWebhook:output_type -> google.protobuf.Empty
-	21,  // 291: gyt.GytService.SearchRepositories:output_type -> gyt.ListReposResponse
-	9,   // 292: gyt.GytService.SearchUsers:output_type -> gyt.ListUsersResponse
-	102, // 293: gyt.GytService.SearchIssues:output_type -> gyt.ListIssuesResponse
-	180, // [180:294] is the sub-list for method output_type
-	66,  // [66:180] is the sub-list for method input_type
+	155, // 166: gyt.GytService.GetPRMergeEligibility:input_type -> gyt.GetPRMergeEligibilityRequest
+	157, // 167: gyt.GytService.HandleBranchPush:input_type -> gyt.BranchPushRequest
+	137, // 168: gyt.GytService.CreateBranchProtection:input_type -> gyt.CreateBranchProtectionRequest
+	138, // 169: gyt.GytService.GetBranchProtection:input_type -> gyt.GetBranchProtectionRequest
+	139, // 170: gyt.GytService.ListBranchProtections:input_type -> gyt.ListBranchProtectionsRequest
+	141, // 171: gyt.GytService.UpdateBranchProtection:input_type -> gyt.UpdateBranchProtectionRequest
+	142, // 172: gyt.GytService.DeleteBranchProtection:input_type -> gyt.DeleteBranchProtectionRequest
+	160, // 173: gyt.GytService.CreateWebhook:input_type -> gyt.CreateWebhookRequest
+	161, // 174: gyt.GytService.GetWebhook:input_type -> gyt.GetWebhookRequest
+	162, // 175: gyt.GytService.ListWebhooks:input_type -> gyt.ListWebhooksRequest
+	164, // 176: gyt.GytService.UpdateWebhook:input_type -> gyt.UpdateWebhookRequest
+	165, // 177: gyt.GytService.DeleteWebhook:input_type -> gyt.DeleteWebhookRequest
+	166, // 178: gyt.GytService.PingWebhook:input_type -> gyt.PingWebhookRequest
+	167, // 179: gyt.GytService.SearchRepositories:input_type -> gyt.SearchReposRequest
+	168, // 180: gyt.GytService.SearchUsers:input_type -> gyt.SearchUsersRequest
+	169, // 181: gyt.GytService.SearchIssues:input_type -> gyt.SearchIssuesRequest
+	3,   // 182: gyt.GytService.Register:output_type -> gyt.AuthResponse
+	3,   // 183: gyt.GytService.Login:output_type -> gyt.AuthResponse
+	3,   // 184: gyt.GytService.RefreshToken:output_type -> gyt.AuthResponse
+	4,   // 185: gyt.GytService.GetUser:output_type -> gyt.UserResponse
+	4,   // 186: gyt.GytService.GetCurrentUser:output_type -> gyt.UserResponse
+	4,   // 187: gyt.GytService.UpdateUser:output_type -> gyt.UserResponse
+	171, // 188: gyt.GytService.DeleteUser:output_type -> google.protobuf.Empty
+	9,   // 189: gyt.GytService.ListUsers:output_type -> gyt.ListUsersResponse
+	12,  // 190: gyt.GytService.ListSSHKeys:output_type -> gyt.ListSSHKeysResponse
+	10,  // 191: gyt.GytService.AddSSHKey:output_type -> gyt.SSHKeyResponse
+	171, // 192: gyt.GytService.DeleteSSHKey:output_type -> google.protobuf.Empty
+	15,  // 193: gyt.GytService.CreateRepository:output_type -> gyt.RepositoryResponse
+	15,  // 194: gyt.GytService.GetRepository:output_type -> gyt.RepositoryResponse
+	21,  // 195: gyt.GytService.ListRepositories:output_type -> gyt.ListReposResponse
+	21,  // 196: gyt.GytService.ListUserRepositories:output_type -> gyt.ListReposResponse
+	21,  // 197: gyt.GytService.ListOrgRepositories:output_type -> gyt.ListReposResponse
+	15,  // 198: gyt.GytService.UpdateRepository:output_type -> gyt.RepositoryResponse
+	171, // 199: gyt.GytService.DeleteRepository:output_type -> google.protobuf.Empty
+	15,  // 200: gyt.GytService.RenameRepository:output_type -> gyt.RepositoryResponse
+	27,  // 201: gyt.GytService.GetRepositoryTree:output_type -> gyt.RepoTreeResponse
+	29,  // 202: gyt.GytService.GetFileBlob:output_type -> gyt.FileBlobResponse
+	32,  // 203: gyt.GytService.ListBranches:output_type -> gyt.ListBranchesResponse
+	31,  // 204: gyt.GytService.CreateBranch:output_type -> gyt.BranchResponse
+	171, // 205: gyt.GytService.DeleteBranch:output_type -> google.protobuf.Empty
+	37,  // 206: gyt.GytService.GetDefaultBranch:output_type -> gyt.DefaultBranchResponse
+	37,  // 207: gyt.GytService.SetDefaultBranch:output_type -> gyt.DefaultBranchResponse
+	40,  // 208: gyt.GytService.ListTags:output_type -> gyt.ListTagsResponse
+	42,  // 209: gyt.GytService.CreateTag:output_type -> gyt.TagDetailResponse
+	171, // 210: gyt.GytService.DeleteTag:output_type -> google.protobuf.Empty
+	47,  // 211: gyt.GytService.ListCommits:output_type -> gyt.ListCommitsResponse
+	50,  // 212: gyt.GytService.GetCommit:output_type -> gyt.CommitDetailResponse
+	52,  // 213: gyt.GytService.GetRepositoryStats:output_type -> gyt.RepoStatsResponse
+	54,  // 214: gyt.GytService.GetCloneURLs:output_type -> gyt.CloneURLsResponse
+	57,  // 215: gyt.GytService.CompareBranches:output_type -> gyt.CompareResponse
+	57,  // 216: gyt.GytService.CompareCommits:output_type -> gyt.CompareResponse
+	59,  // 217: gyt.GytService.GetFileHistory:output_type -> gyt.GetFileHistoryResponse
+	47,  // 218: gyt.GytService.SearchCommits:output_type -> gyt.ListCommitsResponse
+	62,  // 219: gyt.GytService.CheckPath:output_type -> gyt.CheckPathResponse
+	65,  // 220: gyt.GytService.ListCollaborators:output_type -> gyt.ListCollaboratorsResponse
+	171, // 221: gyt.GytService.AddCollaborator:output_type -> google.protobuf.Empty
+	171, // 222: gyt.GytService.RemoveCollaborator:output_type -> google.protobuf.Empty
+	171, // 223: gyt.GytService.UpdateCollaborator:output_type -> google.protobuf.Empty
+	69,  // 224: gyt.GytService.CreateOrganization:output_type -> gyt.OrganizationResponse
+	69,  // 225: gyt.GytService.GetOrganization:output_type -> gyt.OrganizationResponse
+	74,  // 226: gyt.GytService.ListOrganizations:output_type -> gyt.ListOrgsResponse
+	74,  // 227: gyt.GytService.ListUserOrganizations:output_type -> gyt.ListOrgsResponse
+	69,  // 228: gyt.GytService.UpdateOrganization:output_type -> gyt.OrganizationResponse
+	171, // 229: gyt.GytService.DeleteOrganization:output_type -> google.protobuf.Empty
+	79,  // 230: gyt.GytService.ListOrgMembers:output_type -> gyt.ListOrgMembersResponse
+	77,  // 231: gyt.GytService.AddOrgMember:output_type -> gyt.OrgMemberResponse
+	77,  // 232: gyt.GytService.UpdateOrgMember:output_type -> gyt.OrgMemberResponse
+	171, // 233: gyt.GytService.RemoveOrgMember:output_type -> google.protobuf.Empty
+	77,  // 234: gyt.GytService.GetOrgMembership:output_type -> gyt.OrgMemberResponse
+	171, // 235: gyt.GytService.StarRepository:output_type -> google.protobuf.Empty
+	171, // 236: gyt.GytService.UnstarRepository:output_type -> google.protobuf.Empty
+	87,  // 237: gyt.GytService.CheckStar:output_type -> gyt.CheckStarResponse
+	89,  // 238: gyt.GytService.ListStargazers:output_type -> gyt.ListStargazersResponse
+	21,  // 239: gyt.GytService.ListStarredRepositories:output_type -> gyt.ListReposResponse
+	91,  // 240: gyt.GytService.CreateLabel:output_type -> gyt.LabelResponse
+	91,  // 241: gyt.GytService.GetLabel:output_type -> gyt.LabelResponse
+	95,  // 242: gyt.GytService.ListLabels:output_type -> gyt.ListLabelsResponse
+	91,  // 243: gyt.GytService.UpdateLabel:output_type -> gyt.LabelResponse
+	171, // 244: gyt.GytService.DeleteLabel:output_type -> google.protobuf.Empty
+	98,  // 245: gyt.GytService.CreateIssue:output_type -> gyt.IssueResponse
+	98,  // 246: gyt.GytService.GetIssue:output_type -> gyt.IssueResponse
+	102, // 247: gyt.GytService.ListIssues:output_type -> gyt.ListIssuesResponse
+	98,  // 248: gyt.GytService.UpdateIssue:output_type -> gyt.IssueResponse
+	98,  // 249: gyt.GytService.CloseIssue:output_type -> gyt.IssueResponse
+	98,  // 250: gyt.GytService.ReopenIssue:output_type -> gyt.IssueResponse
+	171, // 251: gyt.GytService.AddIssueLabel:output_type -> google.protobuf.Empty
+	171, // 252: gyt.GytService.RemoveIssueLabel:output_type -> google.protobuf.Empty
+	171, // 253: gyt.GytService.AddIssueAssignee:output_type -> google.protobuf.Empty
+	171, // 254: gyt.GytService.RemoveIssueAssignee:output_type -> google.protobuf.Empty
+	110, // 255: gyt.GytService.CreateIssueComment:output_type -> gyt.IssueCommentResponse
+	113, // 256: gyt.GytService.ListIssueComments:output_type -> gyt.ListIssueCommentsResponse
+	110, // 257: gyt.GytService.UpdateIssueComment:output_type -> gyt.IssueCommentResponse
+	171, // 258: gyt.GytService.DeleteIssueComment:output_type -> google.protobuf.Empty
+	116, // 259: gyt.GytService.CreatePullRequest:output_type -> gyt.PullRequestResponse
+	116, // 260: gyt.GytService.GetPullRequest:output_type -> gyt.PullRequestResponse
+	120, // 261: gyt.GytService.ListPullRequests:output_type -> gyt.ListPRsResponse
+	116, // 262: gyt.GytService.UpdatePullRequest:output_type -> gyt.PullRequestResponse
+	123, // 263: gyt.GytService.MergePullRequest:output_type -> gyt.MergePRResponse
+	116, // 264: gyt.GytService.ClosePullRequest:output_type -> gyt.PullRequestResponse
+	116, // 265: gyt.GytService.ReopenPullRequest:output_type -> gyt.PullRequestResponse
+	57,  // 266: gyt.GytService.GetPullRequestDiff:output_type -> gyt.CompareResponse
+	127, // 267: gyt.GytService.CreatePRComment:output_type -> gyt.PRCommentResponse
+	130, // 268: gyt.GytService.ListPRComments:output_type -> gyt.ListPRCommentsResponse
+	127, // 269: gyt.GytService.UpdatePRComment:output_type -> gyt.PRCommentResponse
+	171, // 270: gyt.GytService.DeletePRComment:output_type -> google.protobuf.Empty
+	133, // 271: gyt.GytService.CreatePRReview:output_type -> gyt.PRReviewResponse
+	145, // 272: gyt.GytService.ListPRReviews:output_type -> gyt.ListPRReviewsResponse
+	133, // 273: gyt.GytService.DismissReview:output_type -> gyt.PRReviewResponse
+	171, // 274: gyt.GytService.DismissStaleReviews:output_type -> google.protobuf.Empty
+	171, // 275: gyt.GytService.RequestReview:output_type -> google.protobuf.Empty
+	171, // 276: gyt.GytService.RemoveReviewRequest:output_type -> google.protobuf.Empty
+	150, // 277: gyt.GytService.ListReviewRequests:output_type -> gyt.ListReviewRequestsResponse
+	171, // 278: gyt.GytService.AddPRLabel:output_type -> google.protobuf.Empty
+	171, // 279: gyt.GytService.RemovePRLabel:output_type -> google.protobuf.Empty
+	171, // 280: gyt.GytService.AddPRAssignee:output_type -> google.protobuf.Empty
+	171, // 281: gyt.GytService.RemovePRAssignee:output_type -> google.protobuf.Empty
+	156, // 282: gyt.GytService.GetPRMergeEligibility:output_type -> gyt.PRMergeEligibilityResponse
+	158, // 283: gyt.GytService.HandleBranchPush:output_type -> gyt.BranchPushResponse
+	136, // 284: gyt.GytService.CreateBranchProtection:output_type -> gyt.BranchProtectionResponse
+	136, // 285: gyt.GytService.GetBranchProtection:output_type -> gyt.BranchProtectionResponse
+	140, // 286: gyt.GytService.ListBranchProtections:output_type -> gyt.ListBranchProtectionsResponse
+	136, // 287: gyt.GytService.UpdateBranchProtection:output_type -> gyt.BranchProtectionResponse
+	171, // 288: gyt.GytService.DeleteBranchProtection:output_type -> google.protobuf.Empty
+	159, // 289: gyt.GytService.CreateWebhook:output_type -> gyt.WebhookResponse
+	159, // 290: gyt.GytService.GetWebhook:output_type -> gyt.WebhookResponse
+	163, // 291: gyt.GytService.ListWebhooks:output_type -> gyt.ListWebhooksResponse
+	159, // 292: gyt.GytService.UpdateWebhook:output_type -> gyt.WebhookResponse
+	171, // 293: gyt.GytService.DeleteWebhook:output_type -> google.protobuf.Empty
+	171, // 294: gyt.GytService.PingWebhook:output_type -> google.protobuf.Empty
+	21,  // 295: gyt.GytService.SearchRepositories:output_type -> gyt.ListReposResponse
+	9,   // 296: gyt.GytService.SearchUsers:output_type -> gyt.ListUsersResponse
+	102, // 297: gyt.GytService.SearchIssues:output_type -> gyt.ListIssuesResponse
+	182, // [182:298] is the sub-list for method output_type
+	66,  // [66:182] is the sub-list for method input_type
 	66,  // [66:66] is the sub-list for extension type_name
 	66,  // [66:66] is the sub-list for extension extendee
 	0,   // [0:66] is the sub-list for field type_name
@@ -12669,22 +12958,22 @@ func file_backend_api_proto_init() {
 	file_backend_api_proto_msgTypes[127].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[128].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[141].OneofWrappers = []any{}
-	file_backend_api_proto_msgTypes[156].OneofWrappers = []any{}
-	file_backend_api_proto_msgTypes[157].OneofWrappers = []any{}
-	file_backend_api_proto_msgTypes[158].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[160].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[161].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[162].OneofWrappers = []any{}
-	file_backend_api_proto_msgTypes[163].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[164].OneofWrappers = []any{}
 	file_backend_api_proto_msgTypes[165].OneofWrappers = []any{}
+	file_backend_api_proto_msgTypes[166].OneofWrappers = []any{}
+	file_backend_api_proto_msgTypes[167].OneofWrappers = []any{}
+	file_backend_api_proto_msgTypes[168].OneofWrappers = []any{}
+	file_backend_api_proto_msgTypes[169].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_backend_api_proto_rawDesc), len(file_backend_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   166,
+			NumMessages:   170,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

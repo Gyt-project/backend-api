@@ -242,6 +242,9 @@ func prCommentToProto(c *models.PRComment) *pb.PRCommentResponse {
 		l := int32(*c.Line)
 		resp.Line = &l
 	}
+	if c.CommitSHA != nil {
+		resp.CommitSha = c.CommitSHA
+	}
 	return resp
 }
 
@@ -277,14 +280,14 @@ func branchProtectionToProto(r *models.BranchProtection) *pb.BranchProtectionRes
 		return nil
 	}
 	return &pb.BranchProtectionResponse{
-		Id:                 uint64(r.ID),
-		Pattern:            r.Pattern,
-		RequirePullRequest: r.RequirePullRequest,
-		RequiredApprovals:  int32(r.RequiredApprovals),
+		Id:                  uint64(r.ID),
+		Pattern:             r.Pattern,
+		RequirePullRequest:  r.RequirePullRequest,
+		RequiredApprovals:   int32(r.RequiredApprovals),
 		DismissStaleReviews: r.DismissStaleReviews,
-		BlockForcePush:     r.BlockForcePush,
-		CreatedAt:          timestamppb.New(r.CreatedAt),
-		UpdatedAt:          timestamppb.New(r.UpdatedAt),
+		BlockForcePush:      r.BlockForcePush,
+		CreatedAt:           timestamppb.New(r.CreatedAt),
+		UpdatedAt:           timestamppb.New(r.UpdatedAt),
 	}
 }
 

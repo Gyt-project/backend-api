@@ -35,6 +35,7 @@ type PRComment struct {
 	Body          string  `gorm:"type:text;not null"`
 	Path          *string // chemin du fichier pour commentaire inline
 	Line          *int    // numéro de ligne pour commentaire inline
+	CommitSHA     *string // SHA du commit sur lequel le commentaire a été posé
 
 	PullRequest PullRequest `gorm:"foreignKey:PullRequestID"`
 	Author      User        `gorm:"foreignKey:AuthorID"`

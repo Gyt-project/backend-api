@@ -137,12 +137,13 @@ type CreateOrgInput struct {
 }
 
 type CreatePRCommentInput struct {
-	Owner  string  `json:"owner"`
-	Repo   string  `json:"repo"`
-	Number int     `json:"number"`
-	Body   string  `json:"body"`
-	Path   *string `json:"path,omitempty"`
-	Line   *int    `json:"line,omitempty"`
+	Owner     string  `json:"owner"`
+	Repo      string  `json:"repo"`
+	Number    int     `json:"number"`
+	Body      string  `json:"body"`
+	Path      *string `json:"path,omitempty"`
+	Line      *int    `json:"line,omitempty"`
+	CommitSha *string `json:"commitSha,omitempty"`
 }
 
 type CreatePRInput struct {
@@ -382,8 +383,17 @@ type PRComment struct {
 	Author    *User     `json:"author"`
 	Path      *string   `json:"path,omitempty"`
 	Line      *int      `json:"line,omitempty"`
+	CommitSha *string   `json:"commitSha,omitempty"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type PRMergeEligibility struct {
+	CanMerge                bool    `json:"canMerge"`
+	Reason                  *string `json:"reason,omitempty"`
+	RequiredApprovals       int     `json:"requiredApprovals"`
+	CurrentApprovals        int     `json:"currentApprovals"`
+	BlockedByChangesRequest bool    `json:"blockedByChangesRequest"`
 }
 
 type PRReview struct {

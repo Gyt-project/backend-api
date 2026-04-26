@@ -120,6 +120,8 @@ const (
 	GytService_RemovePRLabel_FullMethodName           = "/gyt.GytService/RemovePRLabel"
 	GytService_AddPRAssignee_FullMethodName           = "/gyt.GytService/AddPRAssignee"
 	GytService_RemovePRAssignee_FullMethodName        = "/gyt.GytService/RemovePRAssignee"
+	GytService_GetPRMergeEligibility_FullMethodName   = "/gyt.GytService/GetPRMergeEligibility"
+	GytService_HandleBranchPush_FullMethodName        = "/gyt.GytService/HandleBranchPush"
 	GytService_CreateBranchProtection_FullMethodName  = "/gyt.GytService/CreateBranchProtection"
 	GytService_GetBranchProtection_FullMethodName     = "/gyt.GytService/GetBranchProtection"
 	GytService_ListBranchProtections_FullMethodName   = "/gyt.GytService/ListBranchProtections"
@@ -254,6 +256,8 @@ type GytServiceClient interface {
 	RemovePRLabel(ctx context.Context, in *RemovePRLabelRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	AddPRAssignee(ctx context.Context, in *AddPRAssigneeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemovePRAssignee(ctx context.Context, in *RemovePRAssigneeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	GetPRMergeEligibility(ctx context.Context, in *GetPRMergeEligibilityRequest, opts ...grpc.CallOption) (*PRMergeEligibilityResponse, error)
+	HandleBranchPush(ctx context.Context, in *BranchPushRequest, opts ...grpc.CallOption) (*BranchPushResponse, error)
 	// ─── Branch Protection ───────────────────────────────────────────────────
 	CreateBranchProtection(ctx context.Context, in *CreateBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error)
 	GetBranchProtection(ctx context.Context, in *GetBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error)
@@ -1281,6 +1285,26 @@ func (c *gytServiceClient) RemovePRAssignee(ctx context.Context, in *RemovePRAss
 	return out, nil
 }
 
+func (c *gytServiceClient) GetPRMergeEligibility(ctx context.Context, in *GetPRMergeEligibilityRequest, opts ...grpc.CallOption) (*PRMergeEligibilityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PRMergeEligibilityResponse)
+	err := c.cc.Invoke(ctx, GytService_GetPRMergeEligibility_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) HandleBranchPush(ctx context.Context, in *BranchPushRequest, opts ...grpc.CallOption) (*BranchPushResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BranchPushResponse)
+	err := c.cc.Invoke(ctx, GytService_HandleBranchPush_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gytServiceClient) CreateBranchProtection(ctx context.Context, in *CreateBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BranchProtectionResponse)
@@ -1539,6 +1563,8 @@ type GytServiceServer interface {
 	RemovePRLabel(context.Context, *RemovePRLabelRequest) (*empty.Empty, error)
 	AddPRAssignee(context.Context, *AddPRAssigneeRequest) (*empty.Empty, error)
 	RemovePRAssignee(context.Context, *RemovePRAssigneeRequest) (*empty.Empty, error)
+	GetPRMergeEligibility(context.Context, *GetPRMergeEligibilityRequest) (*PRMergeEligibilityResponse, error)
+	HandleBranchPush(context.Context, *BranchPushRequest) (*BranchPushResponse, error)
 	// ─── Branch Protection ───────────────────────────────────────────────────
 	CreateBranchProtection(context.Context, *CreateBranchProtectionRequest) (*BranchProtectionResponse, error)
 	GetBranchProtection(context.Context, *GetBranchProtectionRequest) (*BranchProtectionResponse, error)
@@ -1865,6 +1891,12 @@ func (UnimplementedGytServiceServer) AddPRAssignee(context.Context, *AddPRAssign
 }
 func (UnimplementedGytServiceServer) RemovePRAssignee(context.Context, *RemovePRAssigneeRequest) (*empty.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemovePRAssignee not implemented")
+}
+func (UnimplementedGytServiceServer) GetPRMergeEligibility(context.Context, *GetPRMergeEligibilityRequest) (*PRMergeEligibilityResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPRMergeEligibility not implemented")
+}
+func (UnimplementedGytServiceServer) HandleBranchPush(context.Context, *BranchPushRequest) (*BranchPushResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HandleBranchPush not implemented")
 }
 func (UnimplementedGytServiceServer) CreateBranchProtection(context.Context, *CreateBranchProtectionRequest) (*BranchProtectionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateBranchProtection not implemented")
@@ -3729,6 +3761,42 @@ func _GytService_RemovePRAssignee_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GytService_GetPRMergeEligibility_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPRMergeEligibilityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetPRMergeEligibility(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetPRMergeEligibility_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetPRMergeEligibility(ctx, req.(*GetPRMergeEligibilityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_HandleBranchPush_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BranchPushRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).HandleBranchPush(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_HandleBranchPush_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).HandleBranchPush(ctx, req.(*BranchPushRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GytService_CreateBranchProtection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateBranchProtectionRequest)
 	if err := dec(in); err != nil {
@@ -4387,6 +4455,14 @@ var GytService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePRAssignee",
 			Handler:    _GytService_RemovePRAssignee_Handler,
+		},
+		{
+			MethodName: "GetPRMergeEligibility",
+			Handler:    _GytService_GetPRMergeEligibility_Handler,
+		},
+		{
+			MethodName: "HandleBranchPush",
+			Handler:    _GytService_HandleBranchPush_Handler,
 		},
 		{
 			MethodName: "CreateBranchProtection",
