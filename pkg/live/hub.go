@@ -18,11 +18,11 @@ import (
 // verdictProposal tracks an in-flight collective verdict that all lobby
 // participants must accept before the review is persisted.
 type verdictProposal struct {
-	id           string
-	decision     string // "approve" | "request_changes" | "comment"
-	body         string
-	proposerID   uint
-	proposerName string
+	id            string
+	decision      string // "approve" | "request_changes" | "comment"
+	body          string
+	proposerID    uint
+	proposerName  string
 	proposerToken string // JWT — used to authenticate the server-side gRPC call
 	// owner / repo / prNumber identify the pull request in the backend so the
 	// live service can call grpcClient.CreatePRReview without a direct DB query.

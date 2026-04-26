@@ -250,11 +250,13 @@ func prReviewToProto(r *models.PRReview) *pb.PRReviewResponse {
 		return nil
 	}
 	return &pb.PRReviewResponse{
-		Id:          uint64(r.ID),
-		Reviewer:    userToProto(&r.Reviewer),
-		State:       r.State,
-		Body:        r.Body,
-		SubmittedAt: timestamppb.New(r.UpdatedAt),
+		Id:            uint64(r.ID),
+		Reviewer:      userToProto(&r.Reviewer),
+		State:         r.State,
+		Body:          r.Body,
+		SubmittedAt:   timestamppb.New(r.UpdatedAt),
+		Dismissed:     r.Dismissed,
+		DismissReason: r.DismissReason,
 	}
 }
 
@@ -267,6 +269,22 @@ func reviewRequestToProto(r *models.ReviewRequest) *pb.ReviewRequestResponse {
 		Reviewer:    userToProto(&r.Reviewer),
 		RequestedBy: userToProto(&r.RequestedBy),
 		CreatedAt:   timestamppb.New(r.CreatedAt),
+	}
+}
+
+func branchProtectionToProto(r *models.BranchProtection) *pb.BranchProtectionResponse {
+	if r == nil {
+		return nil
+	}
+	return &pb.BranchProtectionResponse{
+		Id:                 uint64(r.ID),
+		Pattern:            r.Pattern,
+		RequirePullRequest: r.RequirePullRequest,
+		RequiredApprovals:  int32(r.RequiredApprovals),
+		DismissStaleReviews: r.DismissStaleReviews,
+		BlockForcePush:     r.BlockForcePush,
+		CreatedAt:          timestamppb.New(r.CreatedAt),
+		UpdatedAt:          timestamppb.New(r.UpdatedAt),
 	}
 }
 

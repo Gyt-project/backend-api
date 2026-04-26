@@ -111,6 +111,8 @@ const (
 	GytService_DeletePRComment_FullMethodName         = "/gyt.GytService/DeletePRComment"
 	GytService_CreatePRReview_FullMethodName          = "/gyt.GytService/CreatePRReview"
 	GytService_ListPRReviews_FullMethodName           = "/gyt.GytService/ListPRReviews"
+	GytService_DismissReview_FullMethodName           = "/gyt.GytService/DismissReview"
+	GytService_DismissStaleReviews_FullMethodName     = "/gyt.GytService/DismissStaleReviews"
 	GytService_RequestReview_FullMethodName           = "/gyt.GytService/RequestReview"
 	GytService_RemoveReviewRequest_FullMethodName     = "/gyt.GytService/RemoveReviewRequest"
 	GytService_ListReviewRequests_FullMethodName      = "/gyt.GytService/ListReviewRequests"
@@ -118,6 +120,11 @@ const (
 	GytService_RemovePRLabel_FullMethodName           = "/gyt.GytService/RemovePRLabel"
 	GytService_AddPRAssignee_FullMethodName           = "/gyt.GytService/AddPRAssignee"
 	GytService_RemovePRAssignee_FullMethodName        = "/gyt.GytService/RemovePRAssignee"
+	GytService_CreateBranchProtection_FullMethodName  = "/gyt.GytService/CreateBranchProtection"
+	GytService_GetBranchProtection_FullMethodName     = "/gyt.GytService/GetBranchProtection"
+	GytService_ListBranchProtections_FullMethodName   = "/gyt.GytService/ListBranchProtections"
+	GytService_UpdateBranchProtection_FullMethodName  = "/gyt.GytService/UpdateBranchProtection"
+	GytService_DeleteBranchProtection_FullMethodName  = "/gyt.GytService/DeleteBranchProtection"
 	GytService_CreateWebhook_FullMethodName           = "/gyt.GytService/CreateWebhook"
 	GytService_GetWebhook_FullMethodName              = "/gyt.GytService/GetWebhook"
 	GytService_ListWebhooks_FullMethodName            = "/gyt.GytService/ListWebhooks"
@@ -238,6 +245,8 @@ type GytServiceClient interface {
 	DeletePRComment(ctx context.Context, in *DeletePRCommentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	CreatePRReview(ctx context.Context, in *CreatePRReviewRequest, opts ...grpc.CallOption) (*PRReviewResponse, error)
 	ListPRReviews(ctx context.Context, in *ListPRReviewsRequest, opts ...grpc.CallOption) (*ListPRReviewsResponse, error)
+	DismissReview(ctx context.Context, in *DismissReviewRequest, opts ...grpc.CallOption) (*PRReviewResponse, error)
+	DismissStaleReviews(ctx context.Context, in *DismissStaleReviewsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RequestReview(ctx context.Context, in *RequestReviewRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemoveReviewRequest(ctx context.Context, in *RemoveReviewRequestRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	ListReviewRequests(ctx context.Context, in *ListReviewRequestsRequest, opts ...grpc.CallOption) (*ListReviewRequestsResponse, error)
@@ -245,6 +254,12 @@ type GytServiceClient interface {
 	RemovePRLabel(ctx context.Context, in *RemovePRLabelRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	AddPRAssignee(ctx context.Context, in *AddPRAssigneeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	RemovePRAssignee(ctx context.Context, in *RemovePRAssigneeRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// ─── Branch Protection ───────────────────────────────────────────────────
+	CreateBranchProtection(ctx context.Context, in *CreateBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error)
+	GetBranchProtection(ctx context.Context, in *GetBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error)
+	ListBranchProtections(ctx context.Context, in *ListBranchProtectionsRequest, opts ...grpc.CallOption) (*ListBranchProtectionsResponse, error)
+	UpdateBranchProtection(ctx context.Context, in *UpdateBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error)
+	DeleteBranchProtection(ctx context.Context, in *DeleteBranchProtectionRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	// ─── Webhooks ────────────────────────────────────────────────────────────
 	CreateWebhook(ctx context.Context, in *CreateWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error)
 	GetWebhook(ctx context.Context, in *GetWebhookRequest, opts ...grpc.CallOption) (*WebhookResponse, error)
@@ -1176,6 +1191,26 @@ func (c *gytServiceClient) ListPRReviews(ctx context.Context, in *ListPRReviewsR
 	return out, nil
 }
 
+func (c *gytServiceClient) DismissReview(ctx context.Context, in *DismissReviewRequest, opts ...grpc.CallOption) (*PRReviewResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PRReviewResponse)
+	err := c.cc.Invoke(ctx, GytService_DismissReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) DismissStaleReviews(ctx context.Context, in *DismissStaleReviewsRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, GytService_DismissStaleReviews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *gytServiceClient) RequestReview(ctx context.Context, in *RequestReviewRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(empty.Empty)
@@ -1240,6 +1275,56 @@ func (c *gytServiceClient) RemovePRAssignee(ctx context.Context, in *RemovePRAss
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, GytService_RemovePRAssignee_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) CreateBranchProtection(ctx context.Context, in *CreateBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BranchProtectionResponse)
+	err := c.cc.Invoke(ctx, GytService_CreateBranchProtection_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) GetBranchProtection(ctx context.Context, in *GetBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BranchProtectionResponse)
+	err := c.cc.Invoke(ctx, GytService_GetBranchProtection_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) ListBranchProtections(ctx context.Context, in *ListBranchProtectionsRequest, opts ...grpc.CallOption) (*ListBranchProtectionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBranchProtectionsResponse)
+	err := c.cc.Invoke(ctx, GytService_ListBranchProtections_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) UpdateBranchProtection(ctx context.Context, in *UpdateBranchProtectionRequest, opts ...grpc.CallOption) (*BranchProtectionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BranchProtectionResponse)
+	err := c.cc.Invoke(ctx, GytService_UpdateBranchProtection_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gytServiceClient) DeleteBranchProtection(ctx context.Context, in *DeleteBranchProtectionRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, GytService_DeleteBranchProtection_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1445,6 +1530,8 @@ type GytServiceServer interface {
 	DeletePRComment(context.Context, *DeletePRCommentRequest) (*empty.Empty, error)
 	CreatePRReview(context.Context, *CreatePRReviewRequest) (*PRReviewResponse, error)
 	ListPRReviews(context.Context, *ListPRReviewsRequest) (*ListPRReviewsResponse, error)
+	DismissReview(context.Context, *DismissReviewRequest) (*PRReviewResponse, error)
+	DismissStaleReviews(context.Context, *DismissStaleReviewsRequest) (*empty.Empty, error)
 	RequestReview(context.Context, *RequestReviewRequest) (*empty.Empty, error)
 	RemoveReviewRequest(context.Context, *RemoveReviewRequestRequest) (*empty.Empty, error)
 	ListReviewRequests(context.Context, *ListReviewRequestsRequest) (*ListReviewRequestsResponse, error)
@@ -1452,6 +1539,12 @@ type GytServiceServer interface {
 	RemovePRLabel(context.Context, *RemovePRLabelRequest) (*empty.Empty, error)
 	AddPRAssignee(context.Context, *AddPRAssigneeRequest) (*empty.Empty, error)
 	RemovePRAssignee(context.Context, *RemovePRAssigneeRequest) (*empty.Empty, error)
+	// ─── Branch Protection ───────────────────────────────────────────────────
+	CreateBranchProtection(context.Context, *CreateBranchProtectionRequest) (*BranchProtectionResponse, error)
+	GetBranchProtection(context.Context, *GetBranchProtectionRequest) (*BranchProtectionResponse, error)
+	ListBranchProtections(context.Context, *ListBranchProtectionsRequest) (*ListBranchProtectionsResponse, error)
+	UpdateBranchProtection(context.Context, *UpdateBranchProtectionRequest) (*BranchProtectionResponse, error)
+	DeleteBranchProtection(context.Context, *DeleteBranchProtectionRequest) (*empty.Empty, error)
 	// ─── Webhooks ────────────────────────────────────────────────────────────
 	CreateWebhook(context.Context, *CreateWebhookRequest) (*WebhookResponse, error)
 	GetWebhook(context.Context, *GetWebhookRequest) (*WebhookResponse, error)
@@ -1746,6 +1839,12 @@ func (UnimplementedGytServiceServer) CreatePRReview(context.Context, *CreatePRRe
 func (UnimplementedGytServiceServer) ListPRReviews(context.Context, *ListPRReviewsRequest) (*ListPRReviewsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPRReviews not implemented")
 }
+func (UnimplementedGytServiceServer) DismissReview(context.Context, *DismissReviewRequest) (*PRReviewResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DismissReview not implemented")
+}
+func (UnimplementedGytServiceServer) DismissStaleReviews(context.Context, *DismissStaleReviewsRequest) (*empty.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DismissStaleReviews not implemented")
+}
 func (UnimplementedGytServiceServer) RequestReview(context.Context, *RequestReviewRequest) (*empty.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RequestReview not implemented")
 }
@@ -1766,6 +1865,21 @@ func (UnimplementedGytServiceServer) AddPRAssignee(context.Context, *AddPRAssign
 }
 func (UnimplementedGytServiceServer) RemovePRAssignee(context.Context, *RemovePRAssigneeRequest) (*empty.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemovePRAssignee not implemented")
+}
+func (UnimplementedGytServiceServer) CreateBranchProtection(context.Context, *CreateBranchProtectionRequest) (*BranchProtectionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateBranchProtection not implemented")
+}
+func (UnimplementedGytServiceServer) GetBranchProtection(context.Context, *GetBranchProtectionRequest) (*BranchProtectionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBranchProtection not implemented")
+}
+func (UnimplementedGytServiceServer) ListBranchProtections(context.Context, *ListBranchProtectionsRequest) (*ListBranchProtectionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListBranchProtections not implemented")
+}
+func (UnimplementedGytServiceServer) UpdateBranchProtection(context.Context, *UpdateBranchProtectionRequest) (*BranchProtectionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateBranchProtection not implemented")
+}
+func (UnimplementedGytServiceServer) DeleteBranchProtection(context.Context, *DeleteBranchProtectionRequest) (*empty.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteBranchProtection not implemented")
 }
 func (UnimplementedGytServiceServer) CreateWebhook(context.Context, *CreateWebhookRequest) (*WebhookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateWebhook not implemented")
@@ -3453,6 +3567,42 @@ func _GytService_ListPRReviews_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GytService_DismissReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DismissReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DismissReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DismissReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DismissReview(ctx, req.(*DismissReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_DismissStaleReviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DismissStaleReviewsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DismissStaleReviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DismissStaleReviews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DismissStaleReviews(ctx, req.(*DismissStaleReviewsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GytService_RequestReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestReviewRequest)
 	if err := dec(in); err != nil {
@@ -3575,6 +3725,96 @@ func _GytService_RemovePRAssignee_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(GytServiceServer).RemovePRAssignee(ctx, req.(*RemovePRAssigneeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_CreateBranchProtection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateBranchProtectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).CreateBranchProtection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_CreateBranchProtection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).CreateBranchProtection(ctx, req.(*CreateBranchProtectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_GetBranchProtection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBranchProtectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).GetBranchProtection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_GetBranchProtection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).GetBranchProtection(ctx, req.(*GetBranchProtectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_ListBranchProtections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBranchProtectionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).ListBranchProtections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_ListBranchProtections_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).ListBranchProtections(ctx, req.(*ListBranchProtectionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_UpdateBranchProtection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBranchProtectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).UpdateBranchProtection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_UpdateBranchProtection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).UpdateBranchProtection(ctx, req.(*UpdateBranchProtectionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GytService_DeleteBranchProtection_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteBranchProtectionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GytServiceServer).DeleteBranchProtection(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GytService_DeleteBranchProtection_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GytServiceServer).DeleteBranchProtection(ctx, req.(*DeleteBranchProtectionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -4113,6 +4353,14 @@ var GytService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _GytService_ListPRReviews_Handler,
 		},
 		{
+			MethodName: "DismissReview",
+			Handler:    _GytService_DismissReview_Handler,
+		},
+		{
+			MethodName: "DismissStaleReviews",
+			Handler:    _GytService_DismissStaleReviews_Handler,
+		},
+		{
 			MethodName: "RequestReview",
 			Handler:    _GytService_RequestReview_Handler,
 		},
@@ -4139,6 +4387,26 @@ var GytService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePRAssignee",
 			Handler:    _GytService_RemovePRAssignee_Handler,
+		},
+		{
+			MethodName: "CreateBranchProtection",
+			Handler:    _GytService_CreateBranchProtection_Handler,
+		},
+		{
+			MethodName: "GetBranchProtection",
+			Handler:    _GytService_GetBranchProtection_Handler,
+		},
+		{
+			MethodName: "ListBranchProtections",
+			Handler:    _GytService_ListBranchProtections_Handler,
+		},
+		{
+			MethodName: "UpdateBranchProtection",
+			Handler:    _GytService_UpdateBranchProtection_Handler,
+		},
+		{
+			MethodName: "DeleteBranchProtection",
+			Handler:    _GytService_DeleteBranchProtection_Handler,
 		},
 		{
 			MethodName: "CreateWebhook",

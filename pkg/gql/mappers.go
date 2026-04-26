@@ -375,11 +375,13 @@ func pbPRReviewToModel(r *pb.PRReviewResponse) *model.PRReview {
 		return nil
 	}
 	return &model.PRReview{
-		ID:          fmt.Sprintf("%d", r.GetId()),
-		Reviewer:    pbUserToModel(r.GetReviewer()),
-		State:       r.GetState(),
-		Body:        r.GetBody(),
-		SubmittedAt: r.GetSubmittedAt().AsTime(),
+		ID:            fmt.Sprintf("%d", r.GetId()),
+		Reviewer:      pbUserToModel(r.GetReviewer()),
+		State:         r.GetState(),
+		Body:          r.GetBody(),
+		SubmittedAt:   r.GetSubmittedAt().AsTime(),
+		Dismissed:     r.GetDismissed(),
+		DismissReason: r.GetDismissReason(),
 	}
 }
 
@@ -417,6 +419,22 @@ func branchProtectionToModel(rule *models.BranchProtection) *model.BranchProtect
 		BlockForcePush:      rule.BlockForcePush,
 		CreatedAt:           rule.CreatedAt,
 		UpdatedAt:           rule.UpdatedAt,
+	}
+}
+
+func pbBranchProtectionToModel(r *pb.BranchProtectionResponse) *model.BranchProtection {
+	if r == nil {
+		return nil
+	}
+	return &model.BranchProtection{
+		ID:                  fmt.Sprintf("%d", r.GetId()),
+		Pattern:             r.GetPattern(),
+		RequirePullRequest:  r.GetRequirePullRequest(),
+		RequiredApprovals:   int(r.GetRequiredApprovals()),
+		DismissStaleReviews: r.GetDismissStaleReviews(),
+		BlockForcePush:      r.GetBlockForcePush(),
+		CreatedAt:           r.GetCreatedAt().AsTime(),
+		UpdatedAt:           r.GetUpdatedAt().AsTime(),
 	}
 }
 

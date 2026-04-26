@@ -82,6 +82,8 @@ func main() {
 		&models.ReviewRequest{},
 		// webhooks
 		&models.Webhook{},
+		// branch protection
+		&models.BranchProtection{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate models: %v", err)

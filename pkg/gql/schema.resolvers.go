@@ -12,8 +12,6 @@ import (
 
 	"github.com/Gyt-project/backend-api/pkg/gql/model"
 	pb "github.com/Gyt-project/backend-api/pkg/grpc"
-	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -664,45 +662,38 @@ func (r *mutationResolver) RemoveReviewRequest(ctx context.Context, owner string
 
 // DismissReview is the resolver for the dismissReview field.
 func (r *mutationResolver) DismissReview(ctx context.Context, owner string, repo string, reviewID string, reason *string) (*model.PRReview, error) {
-	if r.PRSvc == nil {
-		return nil, grpcstatus.Error(codes.Unimplemented, "dismiss review not available via gateway")
-	}
-	callerID, err := extractCallerID(ctx)
+	rid, err := strconv.ParseUint(reviewID, 10, 64)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid review ID: %w", err)
 	}
 	reasonStr := ""
 	if reason != nil {
 		reasonStr = *reason
 	}
-	rev, err := r.PRSvc.DismissReview(ctx, callerID, owner, repo, reviewID, reasonStr)
+	resp, err := r.Client.DismissReview(grpcCtx(ctx), &pb.DismissReviewRequest{
+		Owner:    owner,
+		Repo:     repo,
+		ReviewId: rid,
+		Reason:   reasonStr,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return prReviewToModel(rev), nil
+	return pbPRReviewToModel(resp), nil
 }
 
 // DismissStaleReviews is the resolver for the dismissStaleReviews field.
 func (r *mutationResolver) DismissStaleReviews(ctx context.Context, owner string, repo string, number int) (bool, error) {
-	if r.PRSvc == nil {
-		return false, grpcstatus.Error(codes.Unimplemented, "dismiss stale reviews not available via gateway")
-	}
-	callerID, err := extractCallerID(ctx)
-	if err != nil {
-		return false, err
-	}
-	return true, r.PRSvc.DismissStaleReviews(ctx, callerID, owner, repo, number)
+	_, err := r.Client.DismissStaleReviews(grpcCtx(ctx), &pb.DismissStaleReviewsRequest{
+		Owner:  owner,
+		Repo:   repo,
+		Number: int32(number),
+	})
+	return err == nil, err
 }
 
 // CreateBranchProtection is the resolver for the createBranchProtection field.
 func (r *mutationResolver) CreateBranchProtection(ctx context.Context, input model.CreateBranchProtectionInput) (*model.BranchProtection, error) {
-	if r.BranchProt == nil {
-		return nil, grpcstatus.Error(codes.Unimplemented, "branch protection not available via gateway")
-	}
-	callerID, err := extractCallerID(ctx)
-	if err != nil {
-		return nil, err
-	}
 	requirePR := false
 	if input.RequirePullRequest != nil {
 		requirePR = *input.RequirePullRequest
@@ -719,39 +710,59 @@ func (r *mutationResolver) CreateBranchProtection(ctx context.Context, input mod
 	if input.BlockForcePush != nil {
 		blockForcePush = *input.BlockForcePush
 	}
-	rule, err := r.BranchProt.Create(ctx, callerID, input.Owner, input.Repo, input.Pattern, requirePR, requiredApprovals, dismissStale, blockForcePush)
+	resp, err := r.Client.CreateBranchProtection(grpcCtx(ctx), &pb.CreateBranchProtectionRequest{
+		Owner:               input.Owner,
+		Repo:                input.Repo,
+		Pattern:             input.Pattern,
+		RequirePullRequest:  requirePR,
+		RequiredApprovals:   int32(requiredApprovals),
+		DismissStaleReviews: dismissStale,
+		BlockForcePush:      blockForcePush,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return branchProtectionToModel(rule), nil
+	return pbBranchProtectionToModel(resp), nil
 }
 
 // UpdateBranchProtection is the resolver for the updateBranchProtection field.
 func (r *mutationResolver) UpdateBranchProtection(ctx context.Context, input model.UpdateBranchProtectionInput) (*model.BranchProtection, error) {
-	if r.BranchProt == nil {
-		return nil, grpcstatus.Error(codes.Unimplemented, "branch protection not available via gateway")
+	id, err := strconv.ParseUint(input.ID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %w", err)
 	}
-	callerID, err := extractCallerID(ctx)
+	req := &pb.UpdateBranchProtectionRequest{
+		Owner:               input.Owner,
+		Repo:                input.Repo,
+		Id:                  id,
+		Pattern:             input.Pattern,
+		RequirePullRequest:  input.RequirePullRequest,
+		DismissStaleReviews: input.DismissStaleReviews,
+		BlockForcePush:      input.BlockForcePush,
+	}
+	if input.RequiredApprovals != nil {
+		v := int32(*input.RequiredApprovals)
+		req.RequiredApprovals = &v
+	}
+	resp, err := r.Client.UpdateBranchProtection(grpcCtx(ctx), req)
 	if err != nil {
 		return nil, err
 	}
-	rule, err := r.BranchProt.Update(ctx, callerID, input.Owner, input.Repo, input.ID, input.Pattern, input.RequirePullRequest, input.RequiredApprovals, input.DismissStaleReviews, input.BlockForcePush)
-	if err != nil {
-		return nil, err
-	}
-	return branchProtectionToModel(rule), nil
+	return pbBranchProtectionToModel(resp), nil
 }
 
 // DeleteBranchProtection is the resolver for the deleteBranchProtection field.
 func (r *mutationResolver) DeleteBranchProtection(ctx context.Context, owner string, repo string, id string) (bool, error) {
-	if r.BranchProt == nil {
-		return false, grpcstatus.Error(codes.Unimplemented, "branch protection not available via gateway")
-	}
-	callerID, err := extractCallerID(ctx)
+	uid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("invalid id: %w", err)
 	}
-	return true, r.BranchProt.Delete(ctx, callerID, owner, repo, id)
+	_, err = r.Client.DeleteBranchProtection(grpcCtx(ctx), &pb.DeleteBranchProtectionRequest{
+		Owner: owner,
+		Repo:  repo,
+		Id:    uid,
+	})
+	return err == nil, err
 }
 
 // CreateWebhook is the resolver for the createWebhook field.
@@ -1381,6 +1392,17 @@ func (r *queryResolver) ListPRComments(ctx context.Context, owner string, repo s
 
 // ListPRReviews is the resolver for the listPRReviews field.
 func (r *queryResolver) ListPRReviews(ctx context.Context, owner string, repo string, number int) (*model.ListPRReviewsResponse, error) {
+	if r.PRSvc != nil {
+		reviews, err := r.PRSvc.ListReviews(ctx, owner, repo, number)
+		if err != nil {
+			return nil, err
+		}
+		out := &model.ListPRReviewsResponse{Reviews: make([]*model.PRReview, 0, len(reviews))}
+		for i := range reviews {
+			out.Reviews = append(out.Reviews, prReviewToModel(&reviews[i]))
+		}
+		return out, nil
+	}
 	resp, err := r.Client.ListPRReviews(grpcCtx(ctx), &pb.ListPRReviewsRequest{Owner: owner, Repo: repo, Number: int32(number)})
 	if err != nil {
 		return nil, err
@@ -1416,12 +1438,28 @@ func (r *queryResolver) ListReviewRequests(ctx context.Context, owner string, re
 
 // ListBranchProtections is the resolver for the listBranchProtections field.
 func (r *queryResolver) ListBranchProtections(ctx context.Context, owner string, repo string) (*model.ListBranchProtectionsResponse, error) {
-	panic(fmt.Errorf("not implemented: ListBranchProtections - listBranchProtections"))
+	resp, err := r.Client.ListBranchProtections(grpcCtx(ctx), &pb.ListBranchProtectionsRequest{Owner: owner, Repo: repo})
+	if err != nil {
+		return nil, err
+	}
+	out := &model.ListBranchProtectionsResponse{}
+	for _, rule := range resp.GetRules() {
+		out.Rules = append(out.Rules, pbBranchProtectionToModel(rule))
+	}
+	return out, nil
 }
 
 // GetBranchProtection is the resolver for the getBranchProtection field.
 func (r *queryResolver) GetBranchProtection(ctx context.Context, owner string, repo string, id string) (*model.BranchProtection, error) {
-	panic(fmt.Errorf("not implemented: GetBranchProtection - getBranchProtection"))
+	uid, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid id: %w", err)
+	}
+	resp, err := r.Client.GetBranchProtection(grpcCtx(ctx), &pb.GetBranchProtectionRequest{Owner: owner, Repo: repo, Id: uid})
+	if err != nil {
+		return nil, err
+	}
+	return pbBranchProtectionToModel(resp), nil
 }
 
 // ListWebhooks is the resolver for the listWebhooks field.

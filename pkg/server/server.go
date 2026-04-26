@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/Gyt-project/backend-api/internal/auth"
 	"github.com/Gyt-project/backend-api/internal/service"
@@ -19,15 +20,16 @@ import (
 // GytServer implémente pb.GytServiceServer
 type GytServer struct {
 	pb.UnimplementedGytServiceServer
-	Users    *service.UserService
-	Repos    *service.RepoService
-	Orgs     *service.OrgService
-	Stars    *service.StarService
-	Labels   *service.LabelService
-	Issues   *service.IssueService
-	PRs      *service.PRService
-	Webhooks *service.WebhookService
-	Search   *service.SearchService
+	Users       *service.UserService
+	Repos       *service.RepoService
+	Orgs        *service.OrgService
+	Stars       *service.StarService
+	Labels      *service.LabelService
+	Issues      *service.IssueService
+	PRs         *service.PRService
+	BranchProt  *service.BranchProtectionService
+	Webhooks    *service.WebhookService
+	Search      *service.SearchService
 }
 
 func NewGytServer() *GytServer {
@@ -36,11 +38,12 @@ func NewGytServer() *GytServer {
 		Repos:    &service.RepoService{},
 		Orgs:     &service.OrgService{},
 		Stars:    &service.StarService{},
-		Labels:   &service.LabelService{},
-		Issues:   &service.IssueService{},
-		PRs:      &service.PRService{},
-		Webhooks: &service.WebhookService{},
-		Search:   &service.SearchService{},
+		Labels:      &service.LabelService{},
+		Issues:      &service.IssueService{},
+		PRs:         &service.PRService{},
+		BranchProt:  &service.BranchProtectionService{},
+		Webhooks:    &service.WebhookService{},
+		Search:      &service.SearchService{},
 	}
 }
 
@@ -102,7 +105,8 @@ func (s *GytServer) GetCurrentUser(ctx context.Context, _ *emptypb.Empty) (*pb.U
 	}
 	user, err := s.Users.GetByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		// User was deleted — treat the token as invalid so the client clears its session
+		return nil, status.Error(codes.Unauthenticated, "user not found, please log in again")
 	}
 	return userToProto(user), nil
 }
@@ -1150,6 +1154,18 @@ func (s *GytServer) ListPRReviews(ctx context.Context, req *pb.ListPRReviewsRequ
 	return resp, nil
 }
 
+func (s *GytServer) DismissReview(ctx context.Context, req *pb.DismissReviewRequest) (*pb.PRReviewResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	review, err := s.PRs.DismissReview(ctx, callerID, req.GetOwner(), req.GetRepo(), strconv.FormatUint(req.GetReviewId(), 10), req.GetReason())
+	if err != nil {
+		return nil, err
+	}
+	return prReviewToProto(review), nil
+}
+
 func (s *GytServer) RequestReview(ctx context.Context, req *pb.RequestReviewRequest) (*emptypb.Empty, error) {
 	callerID, err := auth.ExtractUserID(ctx)
 	if err != nil {
@@ -1192,6 +1208,93 @@ func (s *GytServer) AddPRAssignee(ctx context.Context, req *pb.AddPRAssigneeRequ
 
 func (s *GytServer) RemovePRAssignee(ctx context.Context, req *pb.RemovePRAssigneeRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, s.PRs.RemoveAssignee(ctx, req.GetOwner(), req.GetRepo(), int(req.GetNumber()), req.GetUsername())
+}
+
+func (s *GytServer) DismissStaleReviews(ctx context.Context, req *pb.DismissStaleReviewsRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.PRs.DismissStaleReviews(ctx, callerID, req.GetOwner(), req.GetRepo(), int(req.GetNumber()))
+}
+
+// ─── Branch Protection ───────────────────────────────────────────────────────
+
+func (s *GytServer) CreateBranchProtection(ctx context.Context, req *pb.CreateBranchProtectionRequest) (*pb.BranchProtectionResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rule, err := s.BranchProt.Create(ctx, callerID, req.GetOwner(), req.GetRepo(), req.GetPattern(), req.GetRequirePullRequest(), int(req.GetRequiredApprovals()), req.GetDismissStaleReviews(), req.GetBlockForcePush())
+	if err != nil {
+		return nil, err
+	}
+	return branchProtectionToProto(rule), nil
+}
+
+func (s *GytServer) GetBranchProtection(ctx context.Context, req *pb.GetBranchProtectionRequest) (*pb.BranchProtectionResponse, error) {
+	rule, err := s.BranchProt.Get(ctx, req.GetOwner(), req.GetRepo(), strconv.FormatUint(req.GetId(), 10))
+	if err != nil {
+		return nil, err
+	}
+	return branchProtectionToProto(rule), nil
+}
+
+func (s *GytServer) ListBranchProtections(ctx context.Context, req *pb.ListBranchProtectionsRequest) (*pb.ListBranchProtectionsResponse, error) {
+	rules, err := s.BranchProt.List(ctx, req.GetOwner(), req.GetRepo())
+	if err != nil {
+		return nil, err
+	}
+	resp := &pb.ListBranchProtectionsResponse{}
+	for i := range rules {
+		resp.Rules = append(resp.Rules, branchProtectionToProto(&rules[i]))
+	}
+	return resp, nil
+}
+
+func (s *GytServer) UpdateBranchProtection(ctx context.Context, req *pb.UpdateBranchProtectionRequest) (*pb.BranchProtectionResponse, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var pattern *string
+	if req.Pattern != nil {
+		v := req.GetPattern()
+		pattern = &v
+	}
+	var requirePR *bool
+	if req.RequirePullRequest != nil {
+		v := req.GetRequirePullRequest()
+		requirePR = &v
+	}
+	var requiredApprovals *int
+	if req.RequiredApprovals != nil {
+		v := int(req.GetRequiredApprovals())
+		requiredApprovals = &v
+	}
+	var dismissStale *bool
+	if req.DismissStaleReviews != nil {
+		v := req.GetDismissStaleReviews()
+		dismissStale = &v
+	}
+	var blockForcePush *bool
+	if req.BlockForcePush != nil {
+		v := req.GetBlockForcePush()
+		blockForcePush = &v
+	}
+	rule, err := s.BranchProt.Update(ctx, callerID, req.GetOwner(), req.GetRepo(), strconv.FormatUint(req.GetId(), 10), pattern, requirePR, requiredApprovals, dismissStale, blockForcePush)
+	if err != nil {
+		return nil, err
+	}
+	return branchProtectionToProto(rule), nil
+}
+
+func (s *GytServer) DeleteBranchProtection(ctx context.Context, req *pb.DeleteBranchProtectionRequest) (*emptypb.Empty, error) {
+	callerID, err := auth.ExtractUserID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &emptypb.Empty{}, s.BranchProt.Delete(ctx, callerID, req.GetOwner(), req.GetRepo(), strconv.FormatUint(req.GetId(), 10))
 }
 
 // ─── Webhooks ─────────────────────────────────────────────────────────────────

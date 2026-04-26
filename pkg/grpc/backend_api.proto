@@ -123,6 +123,8 @@ service GytService {
   rpc DeletePRComment(DeletePRCommentRequest) returns (google.protobuf.Empty);
   rpc CreatePRReview(CreatePRReviewRequest) returns (PRReviewResponse);
   rpc ListPRReviews(ListPRReviewsRequest) returns (ListPRReviewsResponse);
+  rpc DismissReview(DismissReviewRequest) returns (PRReviewResponse);
+  rpc DismissStaleReviews(DismissStaleReviewsRequest) returns (google.protobuf.Empty);
   rpc RequestReview(RequestReviewRequest) returns (google.protobuf.Empty);
   rpc RemoveReviewRequest(RemoveReviewRequestRequest) returns (google.protobuf.Empty);
   rpc ListReviewRequests(ListReviewRequestsRequest) returns (ListReviewRequestsResponse);
@@ -130,6 +132,13 @@ service GytService {
   rpc RemovePRLabel(RemovePRLabelRequest) returns (google.protobuf.Empty);
   rpc AddPRAssignee(AddPRAssigneeRequest) returns (google.protobuf.Empty);
   rpc RemovePRAssignee(RemovePRAssigneeRequest) returns (google.protobuf.Empty);
+
+  // ─── Branch Protection ───────────────────────────────────────────────────
+  rpc CreateBranchProtection(CreateBranchProtectionRequest) returns (BranchProtectionResponse);
+  rpc GetBranchProtection(GetBranchProtectionRequest) returns (BranchProtectionResponse);
+  rpc ListBranchProtections(ListBranchProtectionsRequest) returns (ListBranchProtectionsResponse);
+  rpc UpdateBranchProtection(UpdateBranchProtectionRequest) returns (BranchProtectionResponse);
+  rpc DeleteBranchProtection(DeleteBranchProtectionRequest) returns (google.protobuf.Empty);
 
   // ─── Webhooks ────────────────────────────────────────────────────────────
   rpc CreateWebhook(CreateWebhookRequest) returns (WebhookResponse);
@@ -1069,9 +1078,81 @@ message DeletePRCommentRequest {
 message PRReviewResponse {
   uint64 id                              = 1;
   UserResponse reviewer                  = 2;
-  string state                           = 3; // "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED"
+  string state                           = 3; // "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED"
   string body                            = 4;
   google.protobuf.Timestamp submitted_at = 5;
+  bool   dismissed                       = 6;
+  string dismiss_reason                  = 7;
+}
+
+message DismissReviewRequest {
+  string owner     = 1;
+  string repo      = 2;
+  uint64 review_id = 3;
+  string reason    = 4;
+}
+
+message DismissStaleReviewsRequest {
+  string owner  = 1;
+  string repo   = 2;
+  int32  number = 3;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Branch Protection Messages
+// ═══════════════════════════════════════════════════════════════
+
+message BranchProtectionResponse {
+  uint64 id                              = 1;
+  string pattern                         = 2;
+  bool   require_pull_request            = 3;
+  int32  required_approvals              = 4;
+  bool   dismiss_stale_reviews           = 5;
+  bool   block_force_push                = 6;
+  google.protobuf.Timestamp created_at   = 7;
+  google.protobuf.Timestamp updated_at   = 8;
+}
+
+message CreateBranchProtectionRequest {
+  string owner                 = 1;
+  string repo                  = 2;
+  string pattern               = 3;
+  bool   require_pull_request  = 4;
+  int32  required_approvals    = 5;
+  bool   dismiss_stale_reviews = 6;
+  bool   block_force_push      = 7;
+}
+
+message GetBranchProtectionRequest {
+  string owner = 1;
+  string repo  = 2;
+  uint64 id    = 3;
+}
+
+message ListBranchProtectionsRequest {
+  string owner = 1;
+  string repo  = 2;
+}
+
+message ListBranchProtectionsResponse {
+  repeated BranchProtectionResponse rules = 1;
+}
+
+message UpdateBranchProtectionRequest {
+  string owner                       = 1;
+  string repo                        = 2;
+  uint64 id                          = 3;
+  optional string pattern            = 4;
+  optional bool   require_pull_request  = 5;
+  optional int32  required_approvals    = 6;
+  optional bool   dismiss_stale_reviews = 7;
+  optional bool   block_force_push      = 8;
+}
+
+message DeleteBranchProtectionRequest {
+  string owner = 1;
+  string repo  = 2;
+  uint64 id    = 3;
 }
 
 message CreatePRReviewRequest {

@@ -68,7 +68,7 @@ type DraftMessage struct {
 
 // ChatMessage is a lobby chat message.
 type ChatMessage struct {
-	Type     string `json:"type"`               // "chat"
+	Type     string `json:"type"` // "chat"
 	Body     string `json:"body"`
 	ParentID *uint  `json:"parentId,omitempty"` // optional reply-to message ID
 }
