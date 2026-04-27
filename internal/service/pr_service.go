@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -272,12 +273,34 @@ func (s *PRService) HandleBranchPush(ctx context.Context, owner, repo, branch st
 		return nil, status.Errorf(codes.Internal, "failed to find PRs: %v", err)
 	}
 
+	log.Printf("[push] HandleBranchPush: owner=%s repo=%s branch=%s open_prs=%d", owner, repo, branch, len(prs))
 	var numbers []int
 	for _, pr := range prs {
 		numbers = append(numbers, pr.Number)
+		log.Printf("[push] dismissing stale reviews for PR #%d", pr.Number)
 		// Ignore error — DismissStaleReviews already respects branch protection rules.
 		_ = s.DismissStaleReviews(dbCtx, 0, owner, repo, pr.Number)
 	}
+
+	// Invalidate the branch list and any content cached under this branch so
+	// that a newly pushed branch (or new commits on an existing one) is visible
+	// immediately after the push hook fires.
+	log.Printf("[push] invalidating cache for owner=%s repo=%s branch=%s", owner, repo, branch)
+	cache.Delete(ctx,
+		fmt.Sprintf("gyt:branches:%s/%s", owner, repo),
+		fmt.Sprintf("gyt:stats:%s/%s", owner, repo),
+		// Repo metadata (default branch, description, etc.) may surface last-commit info.
+		fmt.Sprintf("gyt:repo:%s/%s", owner, repo),
+	)
+	// Invalidate content cached for the pushed branch.
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:commits:%s/%s:%s:*", owner, repo, branch))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:tree:%s/%s:%s:*", owner, repo, branch))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:blob:%s/%s:%s:*", owner, repo, branch))
+	// Also invalidate any entries cached with an empty ref (default branch resolution).
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:commits:%s/%s::*", owner, repo))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:tree:%s/%s::*", owner, repo))
+	cache.InvalidatePattern(ctx, fmt.Sprintf("gyt:blob:%s/%s::*", owner, repo))
+
 	return numbers, nil
 }
 

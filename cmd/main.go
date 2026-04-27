@@ -53,8 +53,9 @@ func main() {
 	USER := os.Getenv("DB_USER")
 	PASSWORD := os.Getenv("DB_PASSWORD")
 	DBNAME := os.Getenv("DB_NAME")
+	SSLMODE := os.Getenv("DB_SSLMODE")
 
-	err = orm.InitORM(HOST, PORT, USER, PASSWORD, DBNAME)
+	err = orm.InitORM(HOST, PORT, USER, PASSWORD, DBNAME, SSLMODE)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

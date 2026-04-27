@@ -133,6 +133,9 @@ func (s *RepoService) CreateRepository(ctx context.Context, callerID uint, name,
 	if name == "" {
 		return nil, status.Error(codes.InvalidArgument, "repository name is required")
 	}
+	if err := validateIdentifier("repository", name); err != nil {
+		return nil, err
+	}
 
 	var ownerID uint
 	var ownerType models.OwnerType

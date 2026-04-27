@@ -11,10 +11,13 @@ import (
 
 var DB *gorm.DB
 
-func InitORM(host, port, user, password, dbname string) error {
+func InitORM(host, port, user, password, dbname, sslmode string) error {
 	var err error
+	if sslmode == "" {
+		sslmode = "disable"
+	}
 	// build the dsn string
-	dsn := "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbname + " port=" + port + " sslmode=require TimeZone=UTC"
+	dsn := "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbname + " port=" + port + " sslmode=" + sslmode + " TimeZone=UTC"
 
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.New(

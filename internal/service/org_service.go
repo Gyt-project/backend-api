@@ -29,6 +29,9 @@ func (s *OrgService) CreateOrganization(ctx context.Context, ownerID uint, name,
 	if name == "" {
 		return nil, status.Error(codes.InvalidArgument, "organization name is required")
 	}
+	if err := validateIdentifier("organization", name); err != nil {
+		return nil, err
+	}
 
 	// Vérifier que le nom n'est pas déjà pris
 	var existing models.Organization

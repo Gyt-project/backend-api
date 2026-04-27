@@ -19,7 +19,10 @@ func (s *SearchService) SearchRepositories(ctx context.Context, query string, la
 	if perPage < 1 {
 		perPage = 30
 	}
-	q := orm.DB.Model(&models.Repository{}).Where("name ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%")
+	q := orm.DB.Model(&models.Repository{})
+	if query != "" {
+		q = q.Where("name ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%")
+	}
 	if language != nil {
 		// placeholder : dans une implémentation future on filtrerait par langue
 	}
@@ -59,7 +62,10 @@ func (s *SearchService) SearchUsers(ctx context.Context, query string, sort, ord
 	if perPage < 1 {
 		perPage = 30
 	}
-	q := orm.DB.Model(&models.User{}).Where("username ILIKE ? OR display_name ILIKE ?", "%"+query+"%", "%"+query+"%")
+	q := orm.DB.Model(&models.User{})
+	if query != "" {
+		q = q.Where("username ILIKE ? OR display_name ILIKE ?", "%"+query+"%", "%"+query+"%")
+	}
 	if sort != nil && *sort == "repositories" {
 		q = q.Order("(SELECT COUNT(*) FROM repositories WHERE owner_id = users.id AND owner_type = 'user') DESC")
 	} else {
@@ -126,4 +132,3 @@ func (s *SearchService) SearchIssues(ctx context.Context, query string, state, i
 	}
 	return issues, total, nil
 }
-

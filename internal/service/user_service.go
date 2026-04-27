@@ -38,6 +38,9 @@ func (s *UserService) Register(ctx context.Context, username, email, password, d
 	if username == "" || email == "" || password == "" {
 		return nil, "", "", status.Error(codes.InvalidArgument, "username, email and password are required")
 	}
+	if err := validateIdentifier("username", username); err != nil {
+		return nil, "", "", err
+	}
 	// Interdire le préfixe réservé aux orgs
 	if strings.HasPrefix(username, "org-") {
 		return nil, "", "", status.Error(codes.InvalidArgument, "username cannot start with 'org-'")

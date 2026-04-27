@@ -44,6 +44,7 @@ func main() {
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
+		os.Getenv("DB_SSLMODE"),
 	); err != nil {
 		log.Fatalf("live: DB connect failed: %v", err)
 	}

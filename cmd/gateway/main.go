@@ -8,9 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Gyt-project/backend-api/internal/auth"
+	"github.com/Gyt-project/backend-api/internal/cache"
+	"github.com/Gyt-project/backend-api/internal/pubsub"
 	"github.com/Gyt-project/backend-api/pkg/events"
 	gql "github.com/Gyt-project/backend-api/pkg/gql"
 	pb "github.com/Gyt-project/backend-api/pkg/grpc"
@@ -59,6 +62,14 @@ func main() {
 	grpcClient := pb.NewGytServiceClient(conn)
 	log.Printf("Connected to gRPC backend at %s", grpcAddr)
 
+	// ── Redis (pub/sub for git server events) ─────────────────────────────────
+	if err := cache.Init(os.Getenv("REDIS_ADDR"), os.Getenv("REDIS_PASSWORD")); err != nil {
+		log.Printf("gateway: Redis unavailable (%v) — repo push events are single-instance only", err)
+	} else {
+		pubsub.Init(cache.Client)
+		log.Println("gateway: Redis connected (repo event pub/sub enabled)")
+	}
+
 	// ── HTTP routes ───────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
 
@@ -72,10 +83,47 @@ func main() {
 		log.Println("GraphQL Playground disponible sur http://localhost:" + gatewayPort + "/playground")
 	}
 
-	// Health check
+	// Health check — includes Redis pub/sub status
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok"}`))
+		w.Header().Set("Content-Type", "application/json")
+		redisStatus := "unavailable"
+		if cache.Client != nil {
+			if err := cache.Client.Ping(r.Context()).Err(); err == nil {
+				redisStatus = "ok"
+			} else {
+				redisStatus = "error: " + err.Error()
+			}
+		}
+		_, _ = fmt.Fprintf(w, `{"status":"ok","redis":%q}`, redisStatus)
+	})
+
+	// WebSocket routing probe — GET /ws/health
+	// Because HAProxy routes /ws/* to this backend, a 200 here proves:
+	//   1. HAProxy is correctly forwarding /ws/* to the gateway
+	//   2. The gateway is reachable
+	//   3. Redis pub/sub is operational (tested with a PING round-trip)
+	// Usage:  curl -i https://<host>/ws/health
+	mux.HandleFunc("/ws/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		redisOK := false
+		redisMsg := "unavailable"
+		if cache.Client != nil {
+			if err := cache.Client.Ping(r.Context()).Err(); err == nil {
+				redisOK = true
+				redisMsg = "ok"
+			} else {
+				redisMsg = err.Error()
+			}
+		}
+		if redisOK {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
+		_, _ = fmt.Fprintf(w,
+			`{"routing":"ok","redis":%q,"ws_path_routed_by_haproxy":true}`,
+			redisMsg,
+		)
 	})
 
 	// ── WebSocket: PR-level events (/ws/pr/{owner}/{repo}/{number}?token=...) ──
@@ -142,19 +190,41 @@ func main() {
 			Branch string `json:"branch"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil || payload.Owner == "" || payload.Repo == "" || payload.Branch == "" {
+			log.Printf("[push] bad request body: %v", err)
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
+
+		// soft-serve names repos as "owner/reponame" (git_repo_name).
+		// Strip the owner prefix so our DB lookups and cache keys use just "reponame".
+		repoName := strings.TrimPrefix(payload.Repo, payload.Owner+"/")
+		log.Printf("[push] hook received: owner=%s repo=%s (normalized: %s) branch=%s", payload.Owner, payload.Repo, repoName, payload.Branch)
+
 		resp, err := grpcClient.HandleBranchPush(r.Context(), &pb.BranchPushRequest{
-			Owner: payload.Owner, Repo: payload.Repo, Branch: payload.Branch,
+			Owner: payload.Owner, Repo: repoName, Branch: payload.Branch,
 		})
-		if err == nil {
-			for _, n := range resp.GetPrNumbers() {
-				key := fmt.Sprintf("%s/%s/%d", payload.Owner, payload.Repo, n)
+		if err != nil {
+			log.Printf("[push] gRPC HandleBranchPush error: %v", err)
+		} else {
+			prNums := resp.GetPrNumbers()
+			log.Printf("[push] gRPC HandleBranchPush ok: affected_prs=%v", prNums)
+			for _, n := range prNums {
+				key := fmt.Sprintf("%s/%s/%d", payload.Owner, repoName, n)
+				log.Printf("[push] publishing new_commits to PR ws key=%s", key)
 				events.PublishPR(key, "new_commits")
 			}
 		}
-		events.PublishRepo(fmt.Sprintf("%s/%s", payload.Owner, payload.Repo), "push")
+
+		repoKey := fmt.Sprintf("%s/%s", payload.Owner, repoName)
+		evtJSON, _ := json.Marshal(events.RepoEvent{Type: "push"})
+		redisChannel := fmt.Sprintf("git:repo:%s:events", repoKey)
+		if pubErr := pubsub.Publish(r.Context(), redisChannel, evtJSON); pubErr != nil {
+			log.Printf("[push] Redis PUBLISH %s failed: %v — falling back to in-memory only", redisChannel, pubErr)
+		} else {
+			log.Printf("[push] Redis PUBLISH %s ok", redisChannel)
+		}
+		events.PublishRepo(repoKey, "push")
+		log.Printf("[push] in-memory hub notified for repo=%s", repoKey)
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -201,6 +271,7 @@ func indexOf(s, sub string) int {
 func wsHandlePR(w http.ResponseWriter, r *http.Request, key string) {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Printf("[ws:pr] upgrade failed key=%s: %v", key, err)
 		return
 	}
 	defer conn.Close()
@@ -211,7 +282,10 @@ func wsHandlePR(w http.ResponseWriter, r *http.Request, key string) {
 	// Read pump: detect client disconnection
 	done := make(chan struct{})
 	go func() {
-		defer close(done)
+		defer func() {
+			log.Printf("[ws:pr] client disconnected key=%s", key)
+			close(done)
+		}()
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				return
@@ -219,6 +293,7 @@ func wsHandlePR(w http.ResponseWriter, r *http.Request, key string) {
 		}
 	}()
 
+	log.Printf("[ws:pr] client connected key=%s", key)
 	_ = conn.WriteJSON(map[string]string{"type": "connected"})
 
 	heartbeat := time.NewTicker(30 * time.Second)
@@ -232,33 +307,46 @@ func wsHandlePR(w http.ResponseWriter, r *http.Request, key string) {
 			return
 		case <-heartbeat.C:
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("[ws:pr] heartbeat write failed key=%s: %v", key, err)
 				return
 			}
 		case e, ok := <-ch:
 			if !ok {
 				return
 			}
+			log.Printf("[ws:pr] forwarding event type=%s key=%s", e.Type, key)
 			if err := conn.WriteJSON(e); err != nil {
+				log.Printf("[ws:pr] write failed key=%s: %v", key, err)
 				return
 			}
 		}
 	}
 }
 
-// wsHandleRepo upgrades the connection to WebSocket and streams repo events.
+// wsHandleRepo upgrades the connection to WebSocket and streams repo-level git
+// events (push, branch create/delete, etc.).
+//
+// Fan-out strategy:
+//   - When Redis is available, the handler subscribes to the Redis channel
+//     "git:repo:{owner}/{repo}:events" so events published by ANY gateway
+//     instance are delivered to ALL connected clients (multi-instance safe).
+//   - When Redis is unavailable the handler falls back to the local in-memory
+//     hub, which works correctly for single-instance deployments.
 func wsHandleRepo(w http.ResponseWriter, r *http.Request, key string) {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Printf("[ws:repo] upgrade failed for key=%s: %v", key, err)
 		return
 	}
 	defer conn.Close()
 
-	ch := events.Repo.Subscribe(key)
-	defer events.Repo.Unsubscribe(key, ch)
-
+	// Read pump — detects client disconnection.
 	done := make(chan struct{})
 	go func() {
-		defer close(done)
+		defer func() {
+			log.Printf("[ws:repo] client disconnected key=%s", key)
+			close(done)
+		}()
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {
 				return
@@ -271,6 +359,47 @@ func wsHandleRepo(w http.ResponseWriter, r *http.Request, key string) {
 	heartbeat := time.NewTicker(30 * time.Second)
 	defer heartbeat.Stop()
 
+	channel := fmt.Sprintf("git:repo:%s:events", key)
+	redisSub, redisErr := pubsub.Subscribe(r.Context(), channel)
+	if redisErr == nil {
+		log.Printf("[ws:repo] client connected key=%s via=redis channel=%s", key, channel)
+		// ── Redis path: cross-instance fan-out ───────────────────────────────
+		defer redisSub.Close()
+		redisCh := redisSub.Channel()
+		for {
+			select {
+			case <-done:
+				return
+			case <-r.Context().Done():
+				return
+			case <-heartbeat.C:
+				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+					log.Printf("[ws:repo] heartbeat write failed key=%s: %v", key, err)
+					return
+				}
+			case msg, ok := <-redisCh:
+				if !ok {
+					log.Printf("[ws:repo] redis channel closed key=%s", key)
+					return
+				}
+				var e events.RepoEvent
+				if err := json.Unmarshal([]byte(msg.Payload), &e); err != nil {
+					log.Printf("[ws:repo] unmarshal error key=%s: %v", key, err)
+					continue
+				}
+				log.Printf("[ws:repo] forwarding event type=%s to client key=%s via=redis", e.Type, key)
+				if err := conn.WriteJSON(e); err != nil {
+					log.Printf("[ws:repo] write failed key=%s: %v", key, err)
+					return
+				}
+			}
+		}
+	}
+
+	// ── In-memory fallback (Redis unavailable) ────────────────────────────────
+	log.Printf("[ws:repo] client connected key=%s via=in-memory (Redis unavailable: %v)", key, redisErr)
+	ch := events.Repo.Subscribe(key)
+	defer events.Repo.Unsubscribe(key, ch)
 	for {
 		select {
 		case <-done:
@@ -279,13 +408,16 @@ func wsHandleRepo(w http.ResponseWriter, r *http.Request, key string) {
 			return
 		case <-heartbeat.C:
 			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("[ws:repo] heartbeat write failed key=%s: %v", key, err)
 				return
 			}
 		case e, ok := <-ch:
 			if !ok {
 				return
 			}
+			log.Printf("[ws:repo] forwarding event type=%s to client key=%s via=in-memory", e.Type, key)
 			if err := conn.WriteJSON(e); err != nil {
+				log.Printf("[ws:repo] write failed key=%s: %v", key, err)
 				return
 			}
 		}
