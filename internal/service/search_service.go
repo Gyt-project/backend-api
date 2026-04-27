@@ -19,7 +19,7 @@ func (s *SearchService) SearchRepositories(ctx context.Context, query string, la
 	if perPage < 1 {
 		perPage = 30
 	}
-	q := orm.DB.Model(&models.Repository{})
+	q := orm.DB.Model(&models.Repository{}).Where("is_private = ?", false)
 	if query != "" {
 		q = q.Where("name ILIKE ? OR description ILIKE ?", "%"+query+"%", "%"+query+"%")
 	}
