@@ -78,10 +78,7 @@ func main() {
 	mux.Handle("/graphql", graphqlHandler)
 
 	// GraphQL Playground (dev uniquement — désactiver en production)
-	if os.Getenv("ENV") != "production" {
-		mux.Handle("/graphql/playground", gql.NewPlaygroundHandler("/graphql"))
-		log.Println("GraphQL Playground disponible sur http://localhost:" + gatewayPort + "/graphql/playground")
-	}
+	mux.Handle("/graphql/playground", gql.NewPlaygroundHandler("/graphql"))
 
 	// Health check — includes Redis pub/sub status
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
